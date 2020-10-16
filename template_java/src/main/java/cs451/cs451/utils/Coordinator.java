@@ -1,4 +1,4 @@
-package cs451;
+package cs451.utils;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -41,6 +41,7 @@ public class Coordinator {
             System.out.println("Accessing barrier...");
             int character;
             while ((character = reader.read()) != -1) {}
+            socket.close();
         } catch (IOException ex) {
             System.out.println("I/O error: " + ex.getMessage());
         }

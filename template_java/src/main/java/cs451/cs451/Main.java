@@ -1,8 +1,10 @@
 package cs451;
 
+import cs451.parser.Parser;
+import cs451.utils.Coordinator;
+import cs451.utils.Host;
+
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.net.*;
 
 public class Main {
@@ -57,60 +59,101 @@ public class Main {
 
         System.out.println("Broadcasting messages...");
 
-        int serverPort;
-        if(pid == 1) {
-            serverPort = 11001;
-        }
-        else {
-            serverPort = 11002;
-        }
-        try{
-            // Instantiate a new DatagramSocket to receive responses from the client
-            DatagramSocket serverSocket = new DatagramSocket(11001);
+        int serverPort, targetPort;
+
+        if(parser.myId() == 1) {
+            try {
+                serverPort = 11001;
+                // Instantiate a new DatagramSocket to receive responses from the client
+                DatagramSocket serverSocket = new DatagramSocket(serverPort);
             
             /* Create buffers to hold sending and receiving data.
             It temporarily stores data in case of communication delays */
-            byte[] receivingDataBuffer = new byte[1024];
-            byte[] sendingDataBuffer = new byte[1024];
+                byte[] receivingDataBuffer = new byte[1024];
+                byte[] sendingDataBuffer = new byte[1024];
             
             /* Instantiate a UDP packet to store the 
             client data using the buffer for receiving data*/
-            DatagramPacket inputPacket = new DatagramPacket(receivingDataBuffer, receivingDataBuffer.length);
-            System.out.println("Waiting for a client to connect...");
-            
-            // Receive data from the client and store in inputPacket
-            serverSocket.receive(inputPacket);
-            
-            // Printing out the client sent data
-            String receivedData = new String(inputPacket.getData());
-            System.out.println("Sent from the client: "+receivedData);
-            
-            /* 
-            * Convert client sent data string to upper case,
-            * Convert it to bytes
-            *  and store it in the corresponding buffer. */
-            sendingDataBuffer = receivedData.toUpperCase().getBytes();
-            
-            // Obtain client's IP address and the port
-            InetAddress senderAddress = inputPacket.getAddress();
-            int senderPort = inputPacket.getPort();
-            
-            // Create new UDP packet with data to send to the client
-            DatagramPacket outputPacket = new DatagramPacket(
-            sendingDataBuffer, sendingDataBuffer.length,
-            senderAddress,senderPort
-            );
-            
-            // Send the created packet to client
-            serverSocket.send(outputPacket);
-            // Close the socket connection
-            serverSocket.close();
+                DatagramPacket inputPacket = new DatagramPacket(receivingDataBuffer, receivingDataBuffer.length);
+                System.out.println("Waiting for a client to connect...");
+
+                // Receive data from the client and store in inputPacket
+                serverSocket.receive(inputPacket);
+
+                // Printing out the client sent data
+                String receivedData = new String(inputPacket.getData());
+                System.out.println("Sent from the client: " + receivedData);
+
+                /*
+                 * Convert client sent data string to upper case,
+                 * Convert it to bytes
+                 *  and store it in the corresponding buffer. */
+                sendingDataBuffer = receivedData.toUpperCase().getBytes();
+
+                // Obtain client's IP address and the port
+                InetAddress senderAddress = inputPacket.getAddress();
+                int senderPort = inputPacket.getPort();
+
+                // Create new UDP packet with data to send to the client
+                DatagramPacket outputPacket = new DatagramPacket(
+                        sendingDataBuffer, sendingDataBuffer.length,
+                        senderAddress, senderPort
+                );
+
+                // Send the created packet to client
+                serverSocket.send(outputPacket);
+                // Close the socket connection
+                serverSocket.close();
+            } catch (SocketException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
-        catch (SocketException e){
-            e.printStackTrace();
-        }
-        catch (IOException e){
-            e.printStackTrace();
+        else {
+            try {
+                serverPort = 11002;
+                targetPort = 11001;
+                // Instantiate a new DatagramSocket to receive responses from the client
+                DatagramSocket serverSocket = new DatagramSocket(serverPort);
+
+            /* Create buffers to hold sending and receiving data.
+            It temporarily stores data in case of communication delays */
+                byte[] receivingDataBuffer = new byte[1024];
+                byte[] sendingDataBuffer = new byte[1024];
+
+                System.out.println("Scrivo a quel'altro");
+
+                sendingDataBuffer = "AO vediamo se funziona".getBytes();
+
+                InetAddress targetAddress = InetAddress.getByName("127.0.0.1");
+
+                // Create new UDP packet with data to send to the client
+                DatagramPacket outputPacket = new DatagramPacket(
+                        sendingDataBuffer, sendingDataBuffer.length,
+                        targetAddress, targetPort
+                );
+
+                // Send the created packet to client
+                serverSocket.send(outputPacket);
+
+                DatagramPacket inputPacket = new DatagramPacket(receivingDataBuffer, receivingDataBuffer.length);
+                System.out.println("Waiting for a client to connect...");
+
+                // Receive data from the client and store in inputPacket
+                serverSocket.receive(inputPacket);
+
+                // Printing out the client sent data
+                String receivedData = new String(inputPacket.getData());
+                System.out.println("Sent from quel'altro: " + receivedData);
+
+                // Close the socket connection
+                serverSocket.close();
+            } catch (SocketException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
 
         System.out.println("Signaling end of broadcasting messages");

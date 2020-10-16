@@ -1,4 +1,4 @@
-package cs451;
+package cs451.utils;
 
 public class Constants {
 
@@ -27,4 +27,7 @@ public class Constants {
 
     // indexes for config
     public static final int CONFIG_VALUE = 10;
+
+    //size of UDP buffer
+    public static final int BUFFER_SIZE = 128;
 }
