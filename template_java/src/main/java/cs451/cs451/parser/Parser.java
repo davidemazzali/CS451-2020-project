@@ -79,6 +79,8 @@ public class Parser {
         return hostsParser.getHosts();
     }
 
+    public HostsParser getHostsParser() { return hostsParser; }
+
     public String barrierIp() {
         return barrierParser.getIp();
     }

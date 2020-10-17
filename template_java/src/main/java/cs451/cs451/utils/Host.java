@@ -9,11 +9,13 @@ public class Host {
 
     private int id;
     private String ip;
+    private InetAddress ipInet;
     private int port = -1;
 
     public boolean populate(String idString, String ipString, String portString) {
         try {
             id = Integer.parseInt(idString);
+
 
             String ipTest = InetAddress.getByName(ipString).toString();
             if (ipTest.startsWith(IP_START_REGEX)) {
@@ -21,6 +23,7 @@ public class Host {
             } else {
                 ip = InetAddress.getByName(ipTest.split(IP_START_REGEX)[0]).getHostAddress();
             }
+            ipInet = InetAddress.getByName(ip);
 
             port = Integer.parseInt(portString);
             if (port <= 0) {
@@ -48,6 +51,8 @@ public class Host {
     public String getIp() {
         return ip;
     }
+
+    public InetAddress getIpInet() { return ipInet; }
 
     public int getPort() {
         return port;

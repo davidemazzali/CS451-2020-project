@@ -87,4 +87,8 @@ public class HostsParser {
 
     }
 
+    public Host getHostById(int id)
+    {
+        return hosts.get(id - 1);
+    }
 }

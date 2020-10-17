@@ -1,34 +1,38 @@
 package cs451.communication;
 
+import cs451.utils.Constants;
+
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
-import java.net.InetAddress;
 
-import static cs451.utils.Constants.BUFFER_SIZE;
+public class UDPServer extends Thread{
+    private DatagramSocket serverSocket;
 
-public class UDPServer {
-    InetAddress serverAddress;
-    int serverPort;
-
-    public UDPServer(InetAddress serverAddress, int serverPort) {
-        this.serverAddress = serverAddress;
-        this.serverPort = serverPort;
+    public UDPServer(DatagramSocket serverSocket) {
+        this.serverSocket = serverSocket;
     }
 
-    public void startListening() throws IOException {
-        DatagramSocket serverSocket = new DatagramSocket(serverPort);
+    public void run() {
+        while (true) {
+            byte[] inputBuffer = new byte[Constants.BUFFER_SIZE];
 
-        byte[] inputBuffer = new byte[BUFFER_SIZE];
+            DatagramPacket inputPacket = new DatagramPacket(inputBuffer, inputBuffer.length);
 
-        DatagramPacket inputPacket = new DatagramPacket(inputBuffer, inputBuffer.length);
+            try {
+                serverSocket.receive(inputPacket);
+            }
+            catch (IOException e) {
+                System.err.println("Error receiving datagram: " + e.getStackTrace());
+            }
 
-        while(true) {
-            serverSocket.receive(inputPacket);
+            byte[] payload = inputPacket.getData();
 
-            byte [] payload = inputPacket.getData();
-
-
+            System.out.println(new String(payload) + " AAAAAAAAAAAAAAAAAAAAAAA");
         }
+    }
+
+    public DatagramSocket getServerSocket() {
+        return serverSocket;
     }
 }

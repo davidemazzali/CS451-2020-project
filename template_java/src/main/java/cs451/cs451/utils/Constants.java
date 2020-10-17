@@ -30,4 +30,7 @@ public class Constants {
 
     //size of UDP buffer
     public static final int BUFFER_SIZE = 128;
+
+    //size in bytes of int
+    public static final int INT_BYTES_SIZE = 4;
 }
