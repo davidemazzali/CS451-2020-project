@@ -23,7 +23,7 @@ public class UDPServer extends Thread{
                 serverSocket.receive(inputPacket);
             }
             catch (IOException e) {
-                System.err.println("Error receiving datagram: " + e.getStackTrace());
+                System.err.println("Error receiving datagram: " + e.getMessage());
             }
 
             byte[] payload = inputPacket.getData();
