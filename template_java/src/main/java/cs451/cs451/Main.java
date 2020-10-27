@@ -1,15 +1,15 @@
 package cs451;
 
-import cs451.communication.UDPSendService;
+import cs451.communication.PerfectLinks;
 import cs451.communication.UDPServer;
 import cs451.parser.HostsParser;
 import cs451.parser.Parser;
-import cs451.utils.Constants;
 import cs451.utils.Coordinator;
 import cs451.utils.Host;
+import cs451.utils.Logger;
 
 import java.net.*;
-import java.nio.ByteBuffer;
+import java.util.Random;
 
 public class Main {
 
@@ -70,20 +70,22 @@ public class Main {
             throw  new RuntimeException("Error creating UDP socket");
         }
 
-        UDPServer udpServer = new UDPServer(socket);
-        udpServer.start();
+        PerfectLinks pl = new PerfectLinks(id, socket, new Logger(parser.output()));
 
         System.out.println("Waiting for all processes for finish initialization");
             coordinator.waitOnBarrier();
 
         System.out.println("Broadcasting messages...");
 
-        Host recipient = hosts.getHostById(((id-1)+1) % parser.hosts().size() + 1);
-        System.out.println("recipient port: " + recipient.getPort());
-        int numMsg = 5;
+        int numMsg = 10;
         for(int i = 0; i < numMsg; i++) {
-            //UDPSendService.sendDatagram(socket, ByteBuffer.allocate(Constants.INT_BYTES_SIZE).putInt(i).array(), recipient.getIpInet(), recipient.getPort());
-            UDPSendService.sendDatagram(socket, (i + " " + id).getBytes(), recipient.getIpInet(), recipient.getPort());
+            int recipientId;
+            Random rand = new Random();
+            do {
+                recipientId = rand.nextInt(parser.hosts().size()) + 1;
+            } while(recipientId == id);
+
+            pl.send("hello world".getBytes(), recipientId);
         }
 
         System.out.println("Signaling end of broadcasting messages");

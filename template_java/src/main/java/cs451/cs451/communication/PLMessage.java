@@ -1,26 +1,21 @@
 package cs451.communication;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.ObjectOutputStream;
+import cs451.parser.HostsParser;
+
+import java.io.*;
+import java.net.InetAddress;
 
 public class PLMessage {
-    private int msgId;
     private int seqNum;
     private int idSender;
     private int idRecipient;
     private byte[] payload;
 
-    public PLMessage(int msgId, int seqNum, int idSender, int idRecipient, byte[] payload) {
-        this.msgId = msgId;
+    public PLMessage(int seqNum, int idSender, int idRecipient, byte[] payload) {
         this.seqNum = seqNum;
         this.idSender = idSender;
         this.idRecipient = idRecipient;
         this.payload = payload;
-    }
-
-    public int getMsgId() {
-        return msgId;
     }
 
     public int getSeqNum() {
@@ -39,10 +34,13 @@ public class PLMessage {
         return payload;
     }
 
-    public byte [] getPLPacket() {
+    public static byte [] getUdpPayloadFromPLMessage(PLMessage msg) {
         byte [] bytesPacket = null;
         try {
-            PLPacket packet = new PLPacket(seqNum, payload);
+            PLPacket packet = new PLPacket(msg.getSeqNum(), msg.getPayload());
+
+            // https://stackoverflow.com/questions/3736058/java-object-to-byte-and-byte-to-object-converter-for-tokyo-cabinet
+
             ByteArrayOutputStream out = new ByteArrayOutputStream();
             ObjectOutputStream os = new ObjectOutputStream(out);
             os.writeObject(packet);
@@ -54,13 +52,39 @@ public class PLMessage {
         return bytesPacket;
     }
 
-    private class PLPacket {
+    public static synchronized PLMessage getPLMessageFromUdpPacket(int senderPort, InetAddress senderAddress, int thisHostId, byte [] udpPayload) {
+        PLMessage msg = null;
+        try {
+            // https://stackoverflow.com/questions/3736058/java-object-to-byte-and-byte-to-object-converter-for-tokyo-cabinet
+
+            ByteArrayInputStream in = new ByteArrayInputStream(udpPayload);
+            ObjectInputStream is = new ObjectInputStream(in);
+            PLPacket packet = (PLPacket) is.readObject();
+
+            int senderId = HostsParser.getIdByPortAddr(senderPort, senderAddress);
+
+            msg = new PLMessage(packet.getSeqNum(), senderId, thisHostId, packet.getPayload());
+        } catch (IOException | ClassNotFoundException e) {
+            System.err.println("Error deserializing PL packet: " + e.getMessage());
+        }
+        return msg;
+    }
+
+    private static class PLPacket implements Serializable {
         private int seqNum;
         private byte[] payload;
 
         public PLPacket(int seqNum, byte[] payload) {
             this.seqNum = seqNum;
             this.payload = payload;
+        }
+
+        public int getSeqNum() {
+            return seqNum;
+        }
+
+        public byte[] getPayload() {
+            return payload;
         }
     }
 }

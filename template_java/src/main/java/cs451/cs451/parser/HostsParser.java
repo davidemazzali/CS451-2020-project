@@ -5,6 +5,7 @@ import cs451.utils.Host;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -90,5 +91,14 @@ public class HostsParser {
     public static Host getHostById(int id)
     {
         return hosts.get(id - 1);
+    }
+
+    public static int getIdByPortAddr(int port, InetAddress address) {
+        for(Host host : hosts) {
+            if(host.getPort() == port && host.getIpInet().equals(address)) {
+                return host.getId();
+            }
+        }
+        return -1;
     }
 }
