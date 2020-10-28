@@ -1,21 +1,34 @@
 package cs451.communication;
 
+import cs451.parser.HostsParser;
 import cs451.utils.Constants;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.net.SocketException;
+import java.util.Arrays;
 
 public class UDPServer extends Thread {
     private int thisHostId;
     private DatagramSocket serverSocket;
     private PerfectLinks pl;
 
-    public UDPServer(int thisHostId, DatagramSocket serverSocket, PerfectLinks pl) {
+    public UDPServer(int thisHostId, int port, PerfectLinks pl) {
         this.thisHostId = thisHostId;
-        this.serverSocket = serverSocket;
         this.pl = pl;
+
+        this.serverSocket = null;
+        try {
+            serverSocket = new DatagramSocket(port);
+        }
+        catch (SocketException e) {
+            System.err.println(e.getStackTrace());
+            throw  new RuntimeException("Error creating UDP socket");
+        }
     }
 
     public void run() {
@@ -35,7 +48,7 @@ public class UDPServer extends Thread {
             int port = inputPacket.getPort();
             InetAddress address = inputPacket.getAddress();
 
-            PLMessage msg = PLMessage.getPLMessageFromUdpPacket(port, address, thisHostId, payload);
+            PLMessage msg = PLMessage.getPLMessageFromUdpPayload(port, address, thisHostId, payload);
 
             pl.udpDeliver(msg);
         }

@@ -39,8 +39,6 @@ public class PLMessage {
         try {
             PLPacket packet = new PLPacket(msg.getSeqNum(), msg.getPayload());
 
-            // https://stackoverflow.com/questions/3736058/java-object-to-byte-and-byte-to-object-converter-for-tokyo-cabinet
-
             ByteArrayOutputStream out = new ByteArrayOutputStream();
             ObjectOutputStream os = new ObjectOutputStream(out);
             os.writeObject(packet);
@@ -52,11 +50,9 @@ public class PLMessage {
         return bytesPacket;
     }
 
-    public static synchronized PLMessage getPLMessageFromUdpPacket(int senderPort, InetAddress senderAddress, int thisHostId, byte [] udpPayload) {
+    public static synchronized PLMessage getPLMessageFromUdpPayload(int senderPort, InetAddress senderAddress, int thisHostId, byte [] udpPayload) {
         PLMessage msg = null;
         try {
-            // https://stackoverflow.com/questions/3736058/java-object-to-byte-and-byte-to-object-converter-for-tokyo-cabinet
-
             ByteArrayInputStream in = new ByteArrayInputStream(udpPayload);
             ObjectInputStream is = new ObjectInputStream(in);
             PLPacket packet = (PLPacket) is.readObject();
@@ -65,12 +61,13 @@ public class PLMessage {
 
             msg = new PLMessage(packet.getSeqNum(), senderId, thisHostId, packet.getPayload());
         } catch (IOException | ClassNotFoundException e) {
-            System.err.println("Error deserializing PL packet: " + e.getMessage());
+            //System.err.println("Error deserializing PL packet: " + e);
+            e.printStackTrace();
         }
         return msg;
     }
 
-    private static class PLPacket implements Serializable {
+    public static class PLPacket implements Serializable {
         private int seqNum;
         private byte[] payload;
 
@@ -79,11 +76,11 @@ public class PLMessage {
             this.payload = payload;
         }
 
-        public int getSeqNum() {
+        private int getSeqNum() {
             return seqNum;
         }
 
-        public byte[] getPayload() {
+        private byte[] getPayload() {
             return payload;
         }
     }
