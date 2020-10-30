@@ -1,0 +1,6 @@
+Exception in thread "Thread-2" java.util.ConcurrentModificationException
+	at java.base/java.util.ArrayList$Itr.checkForComodification(ArrayList.java:1043)
+	at java.base/java.util.ArrayList$Itr.next(ArrayList.java:997)
+	at cs451.utils.Logger.logToOutFile(Logger.java:39)
+	at cs451.Main.handleSignal(Main.java:24)
+	at cs451.Main$1.run(Main.java:31)

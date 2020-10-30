@@ -1,21 +1,13 @@
 package cs451.communication;
 
 import cs451.parser.HostsParser;
-import cs451.utils.Constants;
 import cs451.utils.Logger;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
-import java.nio.ByteBuffer;
-import java.sql.Time;
 import java.util.HashMap;
 
 public class PerfectLinks {
     private UDPServer udpServer;
-    //private BestEffortBroadcast beb;
+    private BestEffortBroadcast beb;
 
     private static final int ACK = -1;
 
@@ -26,60 +18,35 @@ public class PerfectLinks {
 
     private Logger logger;
 
-    /*
     public PerfectLinks(int thisHostId, int port, BestEffortBroadcast beb, Logger logger) {
         nextSeqNum = 0;
-
         this.thisHostId = thisHostId;
-
         delivered = new HashMap<>();
         pending = new HashMap<>();
 
         this.logger = logger;
 
         this.beb = beb;
-
-        this.udpServer = new UDPServer(thisHostId, port, this);
+        this.udpServer = new UDPServer(port, this);
         udpServer.start();
     }
-    */
 
     public PerfectLinks(int thisHostId, int port, Logger logger) {
         nextSeqNum = 0;
-
         this.thisHostId = thisHostId;
-
         delivered = new HashMap<>();
         pending = new HashMap<>();
 
         this.logger = logger;
 
-        this.udpServer = new UDPServer(thisHostId, port, this);
+        this.udpServer = new UDPServer(port, this);
         udpServer.start();
     }
 
-    public void send(byte [] payload, int idRecipient) {
+    public void send(BEBMessage payload, int idRecipient) {
         PLMessage msg = new PLMessage(this.getNextSeqNum(), thisHostId, idRecipient, payload);
-        byte [] s = PLMessage.getUdpPayloadFromPLMessage(msg);
-        udpServer.sendDatagram(s, HostsParser.getHostById(msg.getIdRecipient()).getIpInet(), HostsParser.getHostById(msg.getIdRecipient()).getPort());
 
-        System.out.println("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
-        ByteArrayInputStream in = new ByteArrayInputStream(s);
-        ObjectInputStream is = null;
-        try {
-            is = new ObjectInputStream(in);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        try {
-            PLMessage.PLPacket packet = (PLMessage.PLPacket) is.readObject();
-            System.out.println(packet);
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
-        }
-        System.out.println("BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB");
+        udpServer.sendDatagram(PLMessage.getUdpPayloadFromPLMessage(msg), HostsParser.getHostById(msg.getIdRecipient()).getIpInet(), HostsParser.getHostById(msg.getIdRecipient()).getPort());
 
         pending.put(msg.getSeqNum(), msg);
         Timeout to = new Timeout(msg);
@@ -87,8 +54,7 @@ public class PerfectLinks {
     }
 
     public void sendAck(int seqNumToAck, int idRecipient) {
-        byte [] payload = ByteBuffer.allocate(Constants.INT_BYTES_SIZE).putInt(seqNumToAck).array();
-        PLMessage msg = new PLMessage(ACK, thisHostId, idRecipient, payload);
+        PLMessage msg = new PLMessage(ACK, thisHostId, idRecipient, seqNumToAck);
         udpServer.sendDatagram(PLMessage.getUdpPayloadFromPLMessage(msg), HostsParser.getHostById(msg.getIdRecipient()).getIpInet(), HostsParser.getHostById(msg.getIdRecipient()).getPort());
 
         //System.out.println("********* ack sent " + idRecipient + " " + seqNumToAck);
@@ -108,7 +74,7 @@ public class PerfectLinks {
                 this.deliver(msg);
             }
 
-            //this.sendAck(msg.getSeqNum(), msg.getIdSender());
+            this.sendAck(msg.getSeqNum(), msg.getIdSender());
         }
         else {
             this.ackReceived(msg);
@@ -116,8 +82,7 @@ public class PerfectLinks {
     }
 
     private void deliver(PLMessage msg) {
-        logger.logDeliver(msg.getIdSender(), msg.getSeqNum());
-        //beb.plDeliver(BEBMessage.getBEBMessageFromPLPayload(msg.getPayload()));
+        beb.plDeliver(msg.getPayload());
     }
 
     private class Timeout extends Thread {
@@ -140,7 +105,7 @@ public class PerfectLinks {
                 }
 
                 if(pending.containsKey(msg.getSeqNum())) {
-                    //udpServer.sendDatagram(PLMessage.getUdpPayloadFromPLMessage(msg), HostsParser.getHostById(msg.getIdRecipient()).getIpInet(), HostsParser.getHostById(msg.getIdRecipient()).getPort());
+                    udpServer.sendDatagram(PLMessage.getUdpPayloadFromPLMessage(msg), HostsParser.getHostById(msg.getIdRecipient()).getIpInet(), HostsParser.getHostById(msg.getIdRecipient()).getPort());
                     //System.out.println("############# retransmit " + msg.getIdRecipient() + " " + msg.getSeqNum());
                 }
 
@@ -156,8 +121,8 @@ public class PerfectLinks {
         return seqNum;
     }
 
-    private synchronized void ackReceived(PLMessage ackMsg) {
-        int ackedMsgSeqNum = ByteBuffer.wrap(ackMsg.getPayload()).getInt();
+    private void ackReceived(PLMessage ackMsg) {
+        int ackedMsgSeqNum = ackMsg.getSeqNumToAck();
         if(pending.containsKey(ackedMsgSeqNum)) {
             pending.remove(ackedMsgSeqNum);
         }

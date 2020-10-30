@@ -1,24 +1,17 @@
 package cs451.communication;
 
-import cs451.parser.HostsParser;
 import cs451.utils.Constants;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.ObjectInputStream;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
-import java.util.Arrays;
-
 public class UDPServer extends Thread {
-    private int thisHostId;
     private DatagramSocket serverSocket;
     private PerfectLinks pl;
 
-    public UDPServer(int thisHostId, int port, PerfectLinks pl) {
-        this.thisHostId = thisHostId;
+    public UDPServer(int port, PerfectLinks pl) {
         this.pl = pl;
 
         this.serverSocket = null;
@@ -26,8 +19,7 @@ public class UDPServer extends Thread {
             serverSocket = new DatagramSocket(port);
         }
         catch (SocketException e) {
-            System.err.println(e.getStackTrace());
-            throw  new RuntimeException("Error creating UDP socket");
+            throw  new RuntimeException("Error creating UDP socket: " + e.getMessage());
         }
     }
 
@@ -45,10 +37,8 @@ public class UDPServer extends Thread {
             }
 
             byte[] payload = inputPacket.getData();
-            int port = inputPacket.getPort();
-            InetAddress address = inputPacket.getAddress();
 
-            PLMessage msg = PLMessage.getPLMessageFromUdpPayload(port, address, thisHostId, payload);
+            PLMessage msg = PLMessage.getPLMessageFromUdpPayload(payload);
 
             pl.udpDeliver(msg);
         }
@@ -60,7 +50,7 @@ public class UDPServer extends Thread {
         try {
             serverSocket.send(packet);
         } catch (IOException e) {
-            System.err.println("Error sending datagram: " + e.getStackTrace());
+            System.err.println("Error sending datagram: " + e.getMessage());
         }
     }
 

@@ -1,17 +1,16 @@
 package cs451;
 
-import cs451.communication.BEBMessage;
-import cs451.communication.BestEffortBroadcast;
-import cs451.communication.PLMessage;
-import cs451.communication.PerfectLinks;
+import cs451.communication.*;
 import cs451.parser.HostsParser;
 import cs451.parser.Parser;
 import cs451.utils.Coordinator;
 import cs451.utils.Host;
 import cs451.utils.Logger;
 
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.util.ArrayList;
-import java.util.Random;
+import java.util.Scanner;
 
 public class Main {
 
@@ -64,35 +63,45 @@ public class Main {
         Host thisHost = hosts.getHostById(id);
 
         Logger logger = new Logger(parser.output());
-        //BestEffortBroadcast beb = new BestEffortBroadcast(thisHost.getId(), thisHost.getPort(), (ArrayList) parser.hosts(), logger);
-        PerfectLinks pl = new PerfectLinks(thisHost.getId(), thisHost.getPort(), logger);
+        UniformReliableBroadcast urb = new UniformReliableBroadcast(thisHost.getId(), thisHost.getPort(), (ArrayList)parser.hosts(), logger);
 
         Main.initSignalHandlers(logger);
 
         System.out.println("Waiting for all processes for finish initialization");
-            coordinator.waitOnBarrier();
+        coordinator.waitOnBarrier();
 
         System.out.println("Broadcasting messages...");
 
-        int numMsg = 1;
+        int numMsg = readNumMsg(parser.config());
         for(int i = 0; i < numMsg; i++) {
-            BEBMessage msg = new BEBMessage(i, id, "hello world".getBytes());
-            pl.send(BEBMessage.getPLPayloadFromBEBMessage(msg), id == 1 ? 2 : 1);
+            urb.broadcast();
         }
 
-        /*
-        int numMsg = 1;
-        for(int i = 0; i < numMsg; i++) {
-            beb.broadcast("hello world".getBytes());
-        }
-        */
-
+        
         System.out.println("Signaling end of broadcasting messages");
-            coordinator.finishedBroadcasting();
+        coordinator.finishedBroadcasting();
 
         while (true) {
             // Sleep for 1 hour
             Thread.sleep(60 * 60 * 1000);
         }
+    }
+
+    private static int readNumMsg(String path) {
+        int numMsg = 0;
+        File file = new File(path);
+        Scanner sc = null;
+        try {
+            sc = new Scanner(file);
+
+            if(sc.hasNext()) {
+                numMsg = sc.nextInt();
+            }
+
+            return  numMsg;
+        } catch (FileNotFoundException e) {
+            System.err.println("Error opening config file: " + e.getMessage());
+        }
+        return numMsg;
     }
 }

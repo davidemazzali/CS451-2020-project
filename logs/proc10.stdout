@@ -1,0 +1,24 @@
+My PID is 32482.
+Use 'kill -SIGINT 32482 ' or 'kill -SIGTERM 32482 ' to stop processing packets.
+My id is 10.
+List of hosts is:
+1, 127.0.0.1, 11001
+2, 127.0.0.1, 11002
+3, 127.0.0.1, 11003
+4, 127.0.0.1, 11004
+5, 127.0.0.1, 11005
+6, 127.0.0.1, 11006
+7, 127.0.0.1, 11007
+8, 127.0.0.1, 11008
+9, 127.0.0.1, 11009
+10, 127.0.0.1, 11010
+Barrier: 127.0.0.1:10000
+Signal: 127.0.0.1:11000
+Output: /media/sf_CS451-2020-project/logs/proc10.output
+Config: /tmp/tmpkeou0n_7
+Waiting for all processes for finish initialization
+Accessing barrier...
+Broadcasting messages...
+Signaling end of broadcasting messages
+[23.293s][warning][os,thread] Failed to start thread - pthread_create failed (EAGAIN) for attributes: stacksize: 1024k, guardsize: 0k, detached.
+[122.226s][warning][os,thread] Failed to start thread - pthread_create failed (EAGAIN) for attributes: stacksize: 1024k, guardsize: 0k, detached.

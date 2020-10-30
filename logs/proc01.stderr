@@ -1,0 +1,10 @@
+Exception in thread "Thread-1" java.util.ConcurrentModificationException
+	at java.base/java.util.HashMap$HashIterator.nextNode(HashMap.java:1493)
+	at java.base/java.util.HashMap$ValueIterator.next(HashMap.java:1521)
+	at cs451.communication.UniformReliableBroadcast.checkDeliver(UniformReliableBroadcast.java:80)
+	at cs451.communication.UniformReliableBroadcast.bebDeliver(UniformReliableBroadcast.java:66)
+	at cs451.communication.BestEffortBroadcast.deliver(BestEffortBroadcast.java:45)
+	at cs451.communication.BestEffortBroadcast.plDeliver(BestEffortBroadcast.java:40)
+	at cs451.communication.PerfectLinks.deliver(PerfectLinks.java:85)
+	at cs451.communication.PerfectLinks.udpDeliver(PerfectLinks.java:74)
+	at cs451.communication.UDPServer.run(UDPServer.java:43)

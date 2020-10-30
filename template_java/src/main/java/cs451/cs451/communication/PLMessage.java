@@ -5,17 +5,27 @@ import cs451.parser.HostsParser;
 import java.io.*;
 import java.net.InetAddress;
 
-public class PLMessage {
+public class PLMessage implements Serializable{
     private int seqNum;
     private int idSender;
     private int idRecipient;
-    private byte[] payload;
+    private BEBMessage payload;
+    private int seqNumToAck;
 
-    public PLMessage(int seqNum, int idSender, int idRecipient, byte[] payload) {
+    public PLMessage(int seqNum, int idSender, int idRecipient, BEBMessage payload) {
         this.seqNum = seqNum;
         this.idSender = idSender;
         this.idRecipient = idRecipient;
         this.payload = payload;
+        this.seqNumToAck = -1;
+    }
+
+    public PLMessage(int seqNum, int idSender, int idRecipient, int seqNumToAck) {
+        this.seqNum = seqNum;
+        this.idSender = idSender;
+        this.idRecipient = idRecipient;
+        this.payload = null;
+        this.seqNumToAck = seqNumToAck;
     }
 
     public int getSeqNum() {
@@ -30,18 +40,20 @@ public class PLMessage {
         return idRecipient;
     }
 
-    public byte[] getPayload() {
+    public BEBMessage getPayload() {
         return payload;
+    }
+
+    public int getSeqNumToAck() {
+        return seqNumToAck;
     }
 
     public static byte [] getUdpPayloadFromPLMessage(PLMessage msg) {
         byte [] bytesPacket = null;
         try {
-            PLPacket packet = new PLPacket(msg.getSeqNum(), msg.getPayload());
-
             ByteArrayOutputStream out = new ByteArrayOutputStream();
             ObjectOutputStream os = new ObjectOutputStream(out);
-            os.writeObject(packet);
+            os.writeObject(msg);
             bytesPacket = out.toByteArray();
         } catch (IOException e) {
             System.err.println("Error serializing PL packet: " + e.getMessage());
@@ -50,38 +62,16 @@ public class PLMessage {
         return bytesPacket;
     }
 
-    public static synchronized PLMessage getPLMessageFromUdpPayload(int senderPort, InetAddress senderAddress, int thisHostId, byte [] udpPayload) {
+    public static synchronized PLMessage getPLMessageFromUdpPayload(byte [] udpPayload) {
         PLMessage msg = null;
         try {
             ByteArrayInputStream in = new ByteArrayInputStream(udpPayload);
             ObjectInputStream is = new ObjectInputStream(in);
-            PLPacket packet = (PLPacket) is.readObject();
-
-            int senderId = HostsParser.getIdByPortAddr(senderPort, senderAddress);
-
-            msg = new PLMessage(packet.getSeqNum(), senderId, thisHostId, packet.getPayload());
+            msg = (PLMessage) is.readObject();
         } catch (IOException | ClassNotFoundException e) {
-            //System.err.println("Error deserializing PL packet: " + e);
             e.printStackTrace();
+            System.err.println("Error deserializing PL packet: " + e.getMessage());
         }
         return msg;
-    }
-
-    public static class PLPacket implements Serializable {
-        private int seqNum;
-        private byte[] payload;
-
-        public PLPacket(int seqNum, byte[] payload) {
-            this.seqNum = seqNum;
-            this.payload = payload;
-        }
-
-        private int getSeqNum() {
-            return seqNum;
-        }
-
-        private byte[] getPayload() {
-            return payload;
-        }
     }
 }

@@ -143,17 +143,55 @@ class Validation:
         # Implement on the derived classes
         pass
 
-    def checkAll(self, continueOnError=True):
-        ok = True
+    def checkAll(self, unterminated, continueOnError=True):
+        res = True
+
+        delivered = {}
         for pid in range(1, self.processes+1):
-            ret = self.checkProcess(pid)
-            if not ret:
-                ok = False
+            delivered[pid] = self.checkProcess(pid)
+        
+        correct = unterminated
 
-            if not ret and not continueOnError:
-                return False
+        for pid in range(1, self.processes+1):
+            for m in delivered[pid]:
+                for corr in correct:
+                    if m not in delivered[corr]:
+                        res = False
+                        print(m, pid, "(" + ("correct" if pid in correct else "NOT correct") + ")", corr)
 
-        return ok
+        return res
+
+class URBBroadcastValidation(Validation):
+    def generateConfig(self):
+        hosts = tempfile.NamedTemporaryFile(mode='w')
+        config = tempfile.NamedTemporaryFile(mode='w')
+
+        for i in range(1, self.processes + 1):
+            hosts.write("{} localhost {}\n".format(i, PROCESSES_BASE_IP+i))
+
+        hosts.flush()
+
+        config.write("{}\n".format(self.messages))
+        config.flush()
+
+        return (hosts, config)
+
+    def checkProcess(self, pid):
+        filePath = os.path.join(self.outputDirPath, 'proc{:02d}.output'.format(pid))
+
+        delivered = set()
+
+        with open(filePath) as f:
+            for lineNumber, line in enumerate(f):
+                tokens = line.split()
+
+                # Check delivery
+                if tokens[0] == 'd':
+                    sender = int(tokens[1])
+                    msg = int(tokens[2])
+                    delivered.add((sender, msg))
+
+        return delivered
 
 class FifoBroadcastValidation(Validation):
     def generateConfig(self):
@@ -255,13 +293,15 @@ class StressTest:
                     successfulAttempts += 1
                     print("Sending {} to process {}".format(ProcessInfo.stateToSignalStr(op), proc))
 
-                    # if op == ProcessState.TERMINATED and proc not in terminatedProcs:
-                    #     if len(terminatedProcs) < maxTerminatedProcesses:
+                    """
+                    if op == ProcessState.TERMINATED and proc not in terminatedProcs:
+                        if len(terminatedProcs) < maxTerminatedProcesses:
 
-                    #         terminatedProcs.add(proc)
+                            terminatedProcs.add(proc)
 
-                    # if len(terminatedProcs) == maxTerminatedProcesses:
-                    #     break
+                    if len(terminatedProcs) == maxTerminatedProcesses:
+                        break
+                    """
 
     def remainingUnterminatedProcesses(self):
         remaining = []
@@ -357,7 +397,9 @@ def main(processes, messages, runscript, broadcastType, logsDir, testConfig):
     finishSignalThread = threading.Thread(target=finishSignal.wait)
     finishSignalThread.start()
 
-    if broadcastType == "fifo":
+    if broadcastType == "urb":
+        validation = URBBroadcastValidation(processes, messages, logsDir)
+    elif broadcastType == "fifo":
         validation = FifoBroadcastValidation(processes, messages, logsDir)
     else:
         validation = LCausalBroadcastValidation(processes, messages, logsDir, None)
@@ -413,7 +455,7 @@ def main(processes, messages, runscript, broadcastType, logsDir, testConfig):
         [p.join() for p in monitors]
 
         input('Hit `Enter` to validate the output')
-        print("Result of validation: {}".format(validation.checkAll()))
+        print("Result of validation: {}".format(validation.checkAll(unterminated)))
 
     finally:
         if procs is not None:
@@ -434,7 +476,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "-b",
         "--broadcast",
-        choices=["fifo", "lcausal"],
+        choices=["urb", "fifo", "lcausal"],
         required=True,
         dest="broadcastType",
         help="Which broadcast implementation to test",
