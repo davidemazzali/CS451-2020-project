@@ -2,15 +2,13 @@ package cs451.communication;
 
 import java.io.Serializable;
 
-public class URBMessage implements Serializable {
+public class FIFOMessage implements Serializable {
     private int seqNum;
     private int idBroadcaster;
-    private FIFOMessage payload;
 
-    public URBMessage(int seqNum, int idBroadcaster, FIFOMessage payload) {
+    public FIFOMessage(int seqNum, int idBroadcaster) {
         this.seqNum = seqNum;
         this.idBroadcaster = idBroadcaster;
-        this.payload = payload;
     }
 
     public int getSeqNum() {
@@ -19,9 +17,5 @@ public class URBMessage implements Serializable {
 
     public int getIdBroadcaster() {
         return idBroadcaster;
-    }
-
-    public FIFOMessage getPayload() {
-        return payload;
     }
 }

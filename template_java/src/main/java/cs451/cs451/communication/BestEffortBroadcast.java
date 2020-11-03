@@ -42,7 +42,7 @@ public class BestEffortBroadcast {
 
     private void deliver(BEBMessage msg) {
         //logger.logDeliver(msg.getIdSender(), msg.getSeqNum());
-        urb.bebDeliver(msg.getIdSender(), msg.getPayload());
+        urb.bebDeliver(msg.getPayload());
     }
 
     private int getNextSeqNum() {

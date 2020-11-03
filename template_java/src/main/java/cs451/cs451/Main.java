@@ -16,6 +16,7 @@ public class Main {
 
     private static void handleSignal(Logger logger) {
         //immediately stop network packet processing
+        logger.accessInterrupted(true);
         System.out.println("Immediately stopping network packet processing.");
 
         //write/flush output file if necessary
@@ -63,7 +64,8 @@ public class Main {
         Host thisHost = hosts.getHostById(id);
 
         Logger logger = new Logger(parser.output());
-        UniformReliableBroadcast urb = new UniformReliableBroadcast(thisHost.getId(), thisHost.getPort(), (ArrayList)parser.hosts(), logger);
+        FIFOBroadcast fifo = new FIFOBroadcast(thisHost.getId(), thisHost.getPort(), (ArrayList)parser.hosts(), logger);
+        //UniformReliableBroadcast urb = new UniformReliableBroadcast(thisHost.getId(), thisHost.getPort(), (ArrayList)parser.hosts(), null, logger);
 
         Main.initSignalHandlers(logger);
 
@@ -74,11 +76,12 @@ public class Main {
 
         int numMsg = readNumMsg(parser.config());
         for(int i = 0; i < numMsg; i++) {
-            urb.broadcast();
+            System.out.println("(" + thisHost.getId() + ") broadcast message (" + i + ")");
+            //urb.broadcast(null);
+            fifo.broadcast();
         }
-
         
-        System.out.println("Signaling end of broadcasting messages");
+        System.out.println("(" + thisHost.getId() + ") Signaling end of broadcasting messages");
         coordinator.finishedBroadcasting();
 
         while (true) {

@@ -3,49 +3,52 @@ package cs451.communication;
 import cs451.utils.Host;
 import cs451.utils.Logger;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
 public class UniformReliableBroadcast {
     private BestEffortBroadcast beb;
+    private FIFOBroadcast fifo;
 
     private int nextSeqNum;
     private int thisHostId;
     private HashMap<Integer, HashMap<Integer, URBMessage>> delivered;
     private HashMap<Integer, HashMap<Integer, URBMessage>> pending;
     private HashMap<Integer, HashMap<Integer, Integer>> acks;
-    private ArrayList<Host> hosts;
+    private int numHosts;
 
     private Logger logger;
 
-    public UniformReliableBroadcast(int thisHostId, int port, ArrayList<Host> hosts, Logger logger) {
+    private static final int GET_ALL = 0;
+    private static final int PUT = 1;
+
+    public UniformReliableBroadcast(int thisHostId, int port, ArrayList<Host> hosts, FIFOBroadcast fifo, Logger logger) {
         nextSeqNum = 0;
         this.thisHostId = thisHostId;
-        this.hosts = hosts;
+        this.numHosts = hosts.size();
         delivered = new HashMap<>();
         pending = new HashMap<>();
         acks = new HashMap<>();
 
         this.logger = logger;
 
+        this.fifo = fifo;
         beb =  new BestEffortBroadcast(thisHostId, port, hosts, this, logger);
     }
 
-    public void broadcast() {
-        URBMessage msg = new URBMessage(this.getNextSeqNum(), thisHostId);
+    public void broadcast(FIFOMessage payload) {
+        URBMessage msg = new URBMessage(this.getNextSeqNum(), thisHostId, payload);
 
-        if(!pending.containsKey(thisHostId)) {
-            pending.put(thisHostId, new HashMap<>());
-        }
-        pending.get(thisHostId).put(msg.getSeqNum(), msg);
+        accessPending(PUT, msg);
 
         beb.broadcast(msg);
 
-        logger.logBroadcast(msg.getSeqNum());
+        //logger.logBroadcast(msg.getSeqNum());
     }
 
-    public synchronized void bebDeliver(int senderId, URBMessage msg) {
+    public synchronized void bebDeliver(URBMessage msg) {
         if(!acks.containsKey(msg.getIdBroadcaster())) {
             acks.put(msg.getIdBroadcaster(), new HashMap<>());
         }
@@ -54,29 +57,15 @@ public class UniformReliableBroadcast {
         }
         acks.get(msg.getIdBroadcaster()).put(msg.getSeqNum(), acks.get(msg.getIdBroadcaster()).get(msg.getSeqNum()) + 1);
 
-        if(!pending.containsKey(msg.getIdBroadcaster()) || !pending.get(msg.getIdBroadcaster()).containsKey(msg.getSeqNum())) {
-            if(!pending.containsKey(msg.getIdBroadcaster())) {
-                pending.put(msg.getIdBroadcaster(), new HashMap<>());
-            }
-            pending.get(msg.getIdBroadcaster()).put(msg.getSeqNum(), msg);
-
+        if((Boolean)accessPending(PUT, msg)) {
             beb.broadcast(msg);
         }
 
         checkDeliver();
     }
 
-    private void deliver(URBMessage msg) {
-        if(!delivered.containsKey(msg.getIdBroadcaster())) {
-            delivered.put(msg.getIdBroadcaster(), new HashMap<>());
-        }
-        delivered.get(msg.getIdBroadcaster()).put(msg.getSeqNum(), msg);
-
-        logger.logDeliver(msg.getIdBroadcaster(), msg.getSeqNum());
-    }
-
-    private synchronized void checkDeliver() {
-        for(HashMap<Integer, URBMessage> msgsFromHost : pending.values()) {
+    private void checkDeliver() {
+        for(HashMap<Integer, URBMessage> msgsFromHost : (ArrayList<HashMap<Integer, URBMessage>>)accessPending(GET_ALL, null)) {
             for(URBMessage msg : msgsFromHost.values()) {
                 if(canDeliver(msg)) {
                     if(!delivered.containsKey(msg.getIdBroadcaster()) || !delivered.get(msg.getIdBroadcaster()).containsKey(msg.getSeqNum())) {
@@ -93,9 +82,49 @@ public class UniformReliableBroadcast {
             res = false;
         }
         else {
-            res = acks.get(msg.getIdBroadcaster()).get(msg.getSeqNum()) > hosts.size()/2;
+            res = acks.get(msg.getIdBroadcaster()).get(msg.getSeqNum()) > numHosts/2;
         }
         return res;
+    }
+
+    private void deliver(URBMessage msg) {
+        if(!delivered.containsKey(msg.getIdBroadcaster())) {
+            delivered.put(msg.getIdBroadcaster(), new HashMap<>());
+        }
+        delivered.get(msg.getIdBroadcaster()).put(msg.getSeqNum(), msg);
+
+        //logger.logDeliver(msg.getIdBroadcaster(), msg.getSeqNum());
+        fifo.urbDeliver(msg.getPayload());
+    }
+
+    private synchronized Object accessPending(int op, URBMessage msg) {
+        switch(op) {
+            case GET_ALL:
+                ArrayList<HashMap<Integer, URBMessage>> values = new ArrayList<>();
+                int i = 0;
+                for(HashMap<Integer, URBMessage> msgsFromHost : pending.values()) {
+                    values.add(new HashMap<>());
+                    for(Map.Entry<Integer, URBMessage> entry : msgsFromHost.entrySet()) {
+                        values.get(i).put(entry.getKey(), entry.getValue());
+                    }
+                    i++;
+                }
+                return values;
+            case PUT:
+                if(!pending.containsKey(msg.getIdBroadcaster()) || !pending.get(msg.getIdBroadcaster()).containsKey(msg.getSeqNum())) {
+                    if(!pending.containsKey(msg.getIdBroadcaster())) {
+                        pending.put(msg.getIdBroadcaster(), new HashMap<>());
+                    }
+                    pending.get(msg.getIdBroadcaster()).put(msg.getSeqNum(), msg);
+
+                    return true;
+                }
+                else {
+                    return false;
+                }
+            default:
+                return null;
+        }
     }
 
     private int getNextSeqNum() {

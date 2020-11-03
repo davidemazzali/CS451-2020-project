@@ -7,6 +7,7 @@ import time
 import tempfile
 import threading, subprocess
 import barrier, finishedSignal
+import sys
 
 
 import signal
@@ -144,15 +145,11 @@ class Validation:
         pass
 
     def checkAll(self, unterminated, continueOnError=True):
-        ok = True
+        res = True
+
         delivered = {}
         for pid in range(1, self.processes+1):
-            ret, delivered[pid] = self.checkProcess(pid)
-            if not ret:
-                ok = False
-
-            if not ret and not continueOnError:
-                return False
+            delivered[pid] = self.checkProcess(pid)
         
         correct = unterminated
 
@@ -160,13 +157,42 @@ class Validation:
             for m in delivered[pid]:
                 for corr in correct:
                     if m not in delivered[corr]:
-                        ok = False
+                        res = False
                         print(m, pid, "(" + ("correct" if pid in correct else "NOT correct") + ")", corr)
 
-        for pid in range(1, self.processes+1):
-            print('Process', pid, ' delivered', len(delivered[pid]), ' messages')
+        return res
 
-        return ok
+class URBBroadcastValidation(Validation):
+    def generateConfig(self):
+        hosts = tempfile.NamedTemporaryFile(mode='w')
+        config = tempfile.NamedTemporaryFile(mode='w')
+
+        for i in range(1, self.processes + 1):
+            hosts.write("{} localhost {}\n".format(i, PROCESSES_BASE_IP+i))
+
+        hosts.flush()
+
+        config.write("{}\n".format(self.messages))
+        config.flush()
+
+        return (hosts, config)
+
+    def checkProcess(self, pid):
+        filePath = os.path.join(self.outputDirPath, 'proc{:02d}.output'.format(pid))
+
+        delivered = set()
+
+        with open(filePath) as f:
+            for lineNumber, line in enumerate(f):
+                tokens = line.split()
+
+                # Check delivery
+                if tokens[0] == 'd':
+                    sender = int(tokens[1])
+                    msg = int(tokens[2])
+                    delivered.add((sender, msg))
+
+        return delivered
 
 class FifoBroadcastValidation(Validation):
     def generateConfig(self):
@@ -190,7 +216,6 @@ class FifoBroadcastValidation(Validation):
         nextMessage = defaultdict(lambda : 1)
         filename = os.path.basename(filePath)
 
-        delivered = set()
         with open(filePath) as f:
             for lineNumber, line in enumerate(f):
                 tokens = line.split()
@@ -200,22 +225,20 @@ class FifoBroadcastValidation(Validation):
                     msg = int(tokens[1])
                     if msg != i:
                         print("File {}, Line {}: Messages broadcast out of order. Expected message {} but broadcast message {}".format(filename, lineNumber, i, msg))
-                        return False, None
+                        return False
                     i += 1
 
                 # Check delivery
                 if tokens[0] == 'd':
                     sender = int(tokens[1])
                     msg = int(tokens[2])
-
-                    delivered.add((sender, msg))
-                    
                     if msg != nextMessage[sender]:
                         print("File {}, Line {}: Message delivered out of order. Expected message {}, but delivered message {}".format(filename, lineNumber, nextMessage[sender], msg))
-                        return False, None
+                        return False
                     else:
                         nextMessage[sender] = msg + 1
-        return True, delivered
+
+        return True
 
 class LCausalBroadcastValidation(Validation):
     def __init__(self, processes, outputDir, causalRelationships):
@@ -271,13 +294,15 @@ class StressTest:
                     successfulAttempts += 1
                     print("Sending {} to process {}".format(ProcessInfo.stateToSignalStr(op), proc))
 
-                    # if op == ProcessState.TERMINATED and proc not in terminatedProcs:
-                    #     if len(terminatedProcs) < maxTerminatedProcesses:
+                    """
+                    if op == ProcessState.TERMINATED and proc not in terminatedProcs:
+                        if len(terminatedProcs) < maxTerminatedProcesses:
 
-                    #         terminatedProcs.add(proc)
+                            terminatedProcs.add(proc)
 
-                    # if len(terminatedProcs) == maxTerminatedProcesses:
-                    #     break
+                    if len(terminatedProcs) == maxTerminatedProcesses:
+                        break
+                    """
 
     def remainingUnterminatedProcesses(self):
         remaining = []
@@ -349,8 +374,8 @@ def startProcesses(processes, runscript, hostsFilePath, configFilePath, outputDi
         stdoutFd = open(os.path.join(outputDirPath, 'proc{:02d}.stdout'.format(pid)), "w")
         stderrFd = open(os.path.join(outputDirPath, 'proc{:02d}.stderr'.format(pid)), "w")
 
-
         procs.append((pid, subprocess.Popen(cmd + cmd_ext, stdout=stdoutFd, stderr=stderrFd)))
+        #procs.append((pid, subprocess.Popen(cmd + cmd_ext, stdout=sys.stdout, stderr=sys.stderr)))
 
     return procs
 
@@ -373,7 +398,9 @@ def main(processes, messages, runscript, broadcastType, logsDir, testConfig):
     finishSignalThread = threading.Thread(target=finishSignal.wait)
     finishSignalThread.start()
 
-    if broadcastType == "fifo":
+    if broadcastType == "urb":
+        validation = URBBroadcastValidation(processes, messages, logsDir)
+    elif broadcastType == "fifo":
         validation = FifoBroadcastValidation(processes, messages, logsDir)
     else:
         validation = LCausalBroadcastValidation(processes, messages, logsDir, None)
@@ -431,14 +458,6 @@ def main(processes, messages, runscript, broadcastType, logsDir, testConfig):
         input('Hit `Enter` to validate the output')
         print("Result of validation: {}".format(validation.checkAll(unterminated)))
 
-        outputDirPath = os.path.abspath(logsDir)
-        for pid, _ in procs:
-            print('STDERR of process', pid, ':')
-            with open(os.path.join(outputDirPath, 'proc{:02d}.stderr'.format(pid))) as stderr:
-                for line in stderr:
-                    print(line)
-
-
     finally:
         if procs is not None:
             for _, p in procs:
@@ -458,7 +477,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "-b",
         "--broadcast",
-        choices=["fifo", "lcausal"],
+        choices=["urb", "fifo", "lcausal"],
         required=True,
         dest="broadcastType",
         help="Which broadcast implementation to test",

@@ -1,5 +1,5 @@
-My PID is 17016.
-Use 'kill -SIGINT 17016 ' or 'kill -SIGTERM 17016 ' to stop processing packets.
+My PID is 7200.
+Use 'kill -SIGINT 7200 ' or 'kill -SIGTERM 7200 ' to stop processing packets.
 My id is 4.
 List of hosts is:
 1, 127.0.0.1, 11001
@@ -7,14 +7,1263 @@ List of hosts is:
 3, 127.0.0.1, 11003
 4, 127.0.0.1, 11004
 5, 127.0.0.1, 11005
+6, 127.0.0.1, 11006
+7, 127.0.0.1, 11007
 Barrier: 127.0.0.1:10000
 Signal: 127.0.0.1:11000
 Output: /media/sf_CS451-2020-project/logs/proc04.output
-Config: /tmp/tmpl6l1teti
+Config: /tmp/tmp3l8apcb2
 Waiting for all processes for finish initialization
 Accessing barrier...
 Broadcasting messages...
-Signaling end of broadcasting messages
+(4) broadcast message (0)
+(4) broadcast message (1)
+(4) broadcast message (2)
+(4) broadcast message (3)
+(4) broadcast message (4)
+(4) broadcast message (5)
+(4) broadcast message (6)
+(4) broadcast message (7)
+(4) broadcast message (8)
+(4) broadcast message (9)
+(4) broadcast message (10)
+(4) broadcast message (11)
+(4) broadcast message (12)
+(4) broadcast message (13)
+(4) broadcast message (14)
+(4) broadcast message (15)
+(4) broadcast message (16)
+(4) broadcast message (17)
+(4) broadcast message (18)
+(4) broadcast message (19)
+(4) broadcast message (20)
+(4) broadcast message (21)
+(4) broadcast message (22)
+(4) broadcast message (23)
+(4) broadcast message (24)
+(4) broadcast message (25)
+(4) broadcast message (26)
+(4) broadcast message (27)
+(4) broadcast message (28)
+(4) broadcast message (29)
+(4) broadcast message (30)
+(4) broadcast message (31)
+(4) broadcast message (32)
+(4) broadcast message (33)
+(4) broadcast message (34)
+(4) broadcast message (35)
+(4) broadcast message (36)
+(4) broadcast message (37)
+(4) broadcast message (38)
+(4) broadcast message (39)
+(4) broadcast message (40)
+(4) broadcast message (41)
+(4) broadcast message (42)
+(4) broadcast message (43)
+(4) broadcast message (44)
+(4) broadcast message (45)
+(4) broadcast message (46)
+(4) broadcast message (47)
+(4) broadcast message (48)
+(4) broadcast message (49)
+(4) broadcast message (50)
+(4) broadcast message (51)
+(4) broadcast message (52)
+(4) broadcast message (53)
+(4) broadcast message (54)
+(4) broadcast message (55)
+(4) broadcast message (56)
+(4) broadcast message (57)
+(4) broadcast message (58)
+(4) broadcast message (59)
+(4) broadcast message (60)
+(4) broadcast message (61)
+(4) broadcast message (62)
+(4) broadcast message (63)
+(4) broadcast message (64)
+(4) broadcast message (65)
+(4) broadcast message (66)
+(4) broadcast message (67)
+(4) broadcast message (68)
+(4) broadcast message (69)
+(4) broadcast message (70)
+(4) broadcast message (71)
+(4) broadcast message (72)
+(4) broadcast message (73)
+(4) broadcast message (74)
+(4) broadcast message (75)
+(4) broadcast message (76)
+(4) broadcast message (77)
+(4) broadcast message (78)
+(4) broadcast message (79)
+(4) broadcast message (80)
+(4) broadcast message (81)
+(4) broadcast message (82)
+(4) broadcast message (83)
+(4) broadcast message (84)
+(4) broadcast message (85)
+(4) broadcast message (86)
+(4) broadcast message (87)
+(4) broadcast message (88)
+(4) broadcast message (89)
+(4) broadcast message (90)
+(4) broadcast message (91)
+(4) broadcast message (92)
+(4) broadcast message (93)
+(4) broadcast message (94)
+(4) broadcast message (95)
+(4) broadcast message (96)
+(4) broadcast message (97)
+(4) broadcast message (98)
+(4) broadcast message (99)
+(4) broadcast message (100)
+(4) broadcast message (101)
+(4) broadcast message (102)
+(4) broadcast message (103)
+(4) broadcast message (104)
+(4) broadcast message (105)
+(4) broadcast message (106)
+(4) broadcast message (107)
+(4) broadcast message (108)
+(4) broadcast message (109)
+(4) broadcast message (110)
+(4) broadcast message (111)
+(4) broadcast message (112)
+(4) broadcast message (113)
+(4) broadcast message (114)
+(4) broadcast message (115)
+(4) broadcast message (116)
+(4) broadcast message (117)
+(4) broadcast message (118)
+(4) broadcast message (119)
+(4) broadcast message (120)
+(4) broadcast message (121)
+(4) broadcast message (122)
+(4) broadcast message (123)
+(4) broadcast message (124)
+(4) broadcast message (125)
+(4) broadcast message (126)
+(4) broadcast message (127)
+(4) broadcast message (128)
+(4) broadcast message (129)
+(4) broadcast message (130)
+(4) broadcast message (131)
+(4) broadcast message (132)
+(4) broadcast message (133)
+(4) broadcast message (134)
+(4) broadcast message (135)
+(4) broadcast message (136)
+(4) broadcast message (137)
+(4) broadcast message (138)
+(4) broadcast message (139)
+(4) broadcast message (140)
+(4) broadcast message (141)
+(4) broadcast message (142)
+(4) broadcast message (143)
+(4) broadcast message (144)
+(4) broadcast message (145)
+(4) broadcast message (146)
+(4) broadcast message (147)
+(4) broadcast message (148)
+(4) broadcast message (149)
+(4) broadcast message (150)
+(4) broadcast message (151)
+(4) broadcast message (152)
+(4) broadcast message (153)
+(4) broadcast message (154)
+(4) broadcast message (155)
+(4) broadcast message (156)
+(4) broadcast message (157)
+(4) broadcast message (158)
+(4) broadcast message (159)
+(4) broadcast message (160)
+(4) broadcast message (161)
+(4) broadcast message (162)
+(4) broadcast message (163)
+(4) broadcast message (164)
+(4) broadcast message (165)
+(4) broadcast message (166)
+(4) broadcast message (167)
+(4) broadcast message (168)
+(4) broadcast message (169)
+(4) broadcast message (170)
+(4) broadcast message (171)
+(4) broadcast message (172)
+(4) broadcast message (173)
+(4) broadcast message (174)
+(4) broadcast message (175)
+(4) broadcast message (176)
+(4) broadcast message (177)
+(4) broadcast message (178)
+(4) broadcast message (179)
+(4) broadcast message (180)
+(4) broadcast message (181)
+(4) broadcast message (182)
+(4) broadcast message (183)
+(4) broadcast message (184)
+(4) broadcast message (185)
+(4) broadcast message (186)
+(4) broadcast message (187)
+(4) broadcast message (188)
+(4) broadcast message (189)
+(4) broadcast message (190)
+(4) broadcast message (191)
+(4) broadcast message (192)
+(4) broadcast message (193)
+(4) broadcast message (194)
+(4) broadcast message (195)
+(4) broadcast message (196)
+(4) broadcast message (197)
+(4) broadcast message (198)
+(4) broadcast message (199)
+(4) Signaling end of broadcasting messages
 Immediately stopping network packet processing.
 Writing output.
-b 0
+b 1
+b 2
+b 3
+b 4
+b 5
+b 6
+b 7
+b 8
+b 9
+b 10
+b 11
+b 12
+b 13
+b 14
+b 15
+b 16
+b 17
+b 18
+b 19
+b 20
+b 21
+b 22
+b 23
+b 24
+b 25
+b 26
+b 27
+b 28
+b 29
+b 30
+b 31
+b 32
+b 33
+b 34
+b 35
+b 36
+b 37
+b 38
+b 39
+b 40
+b 41
+b 42
+b 43
+b 44
+b 45
+b 46
+b 47
+b 48
+b 49
+b 50
+b 51
+b 52
+b 53
+b 54
+b 55
+b 56
+b 57
+b 58
+b 59
+b 60
+b 61
+b 62
+b 63
+b 64
+b 65
+b 66
+b 67
+b 68
+b 69
+b 70
+b 71
+b 72
+b 73
+b 74
+b 75
+b 76
+b 77
+b 78
+b 79
+b 80
+b 81
+b 82
+b 83
+b 84
+b 85
+b 86
+b 87
+b 88
+b 89
+b 90
+b 91
+b 92
+b 93
+b 94
+b 95
+b 96
+b 97
+b 98
+b 99
+b 100
+b 101
+b 102
+b 103
+b 104
+b 105
+b 106
+b 107
+b 108
+b 109
+b 110
+b 111
+b 112
+b 113
+b 114
+b 115
+b 116
+b 117
+b 118
+b 119
+b 120
+b 121
+b 122
+b 123
+b 124
+b 125
+b 126
+b 127
+b 128
+b 129
+b 130
+b 131
+b 132
+b 133
+b 134
+b 135
+b 136
+b 137
+b 138
+b 139
+b 140
+b 141
+b 142
+b 143
+b 144
+b 145
+b 146
+b 147
+b 148
+b 149
+b 150
+b 151
+b 152
+b 153
+b 154
+b 155
+b 156
+b 157
+b 158
+b 159
+b 160
+b 161
+b 162
+b 163
+b 164
+b 165
+b 166
+b 167
+b 168
+b 169
+b 170
+b 171
+b 172
+b 173
+b 174
+b 175
+b 176
+b 177
+b 178
+b 179
+b 180
+b 181
+b 182
+b 183
+b 184
+b 185
+b 186
+b 187
+b 188
+b 189
+b 190
+b 191
+b 192
+b 193
+b 194
+b 195
+b 196
+b 197
+b 198
+b 199
+b 200
+d 3 1
+d 2 1
+d 6 1
+d 2 2
+d 6 2
+d 2 3
+d 2 4
+d 5 1
+d 5 2
+d 5 3
+d 5 4
+d 3 2
+d 3 3
+d 3 4
+d 3 5
+d 3 6
+d 3 7
+d 3 8
+d 3 9
+d 2 5
+d 2 6
+d 2 7
+d 2 8
+d 2 9
+d 2 10
+d 2 11
+d 2 12
+d 2 13
+d 2 14
+d 2 15
+d 2 16
+d 2 17
+d 2 18
+d 2 19
+d 2 20
+d 2 21
+d 2 22
+d 4 1
+d 4 2
+d 3 10
+d 3 11
+d 3 12
+d 3 13
+d 3 14
+d 3 15
+d 3 16
+d 3 17
+d 3 18
+d 2 23
+d 2 24
+d 2 25
+d 2 26
+d 2 27
+d 2 28
+d 2 29
+d 2 30
+d 2 31
+d 2 32
+d 2 33
+d 2 34
+d 5 5
+d 6 3
+d 6 4
+d 6 5
+d 6 6
+d 3 19
+d 3 20
+d 3 21
+d 3 22
+d 3 23
+d 3 24
+d 2 35
+d 2 36
+d 2 37
+d 2 38
+d 2 39
+d 2 40
+d 2 41
+d 2 42
+d 5 6
+d 5 7
+d 5 8
+d 5 9
+d 5 10
+d 5 11
+d 5 12
+d 5 13
+d 5 14
+d 5 15
+d 5 16
+d 5 17
+d 5 18
+d 5 19
+d 5 20
+d 1 1
+d 1 2
+d 5 21
+d 5 22
+d 5 23
+d 5 24
+d 1 3
+d 1 4
+d 1 5
+d 1 6
+d 3 25
+d 1 7
+d 1 8
+d 1 9
+d 1 10
+d 1 11
+d 1 12
+d 1 13
+d 1 14
+d 1 15
+d 1 16
+d 1 17
+d 1 18
+d 1 19
+d 1 20
+d 4 3
+d 4 4
+d 4 5
+d 4 6
+d 4 7
+d 4 8
+d 4 9
+d 4 10
+d 4 11
+d 4 12
+d 4 13
+d 4 14
+d 4 15
+d 4 16
+d 4 17
+d 4 18
+d 4 19
+d 4 20
+d 4 21
+d 4 22
+d 4 23
+d 4 24
+d 4 25
+d 4 26
+d 4 27
+d 4 28
+d 4 29
+d 1 21
+d 1 22
+d 1 23
+d 1 24
+d 1 25
+d 1 26
+d 1 27
+d 1 28
+d 1 29
+d 1 30
+d 1 31
+d 4 30
+d 4 31
+d 4 32
+d 3 26
+d 3 27
+d 3 28
+d 3 29
+d 3 30
+d 3 31
+d 3 32
+d 3 33
+d 3 34
+d 3 35
+d 3 36
+d 3 37
+d 3 38
+d 3 39
+d 3 40
+d 3 41
+d 3 42
+d 3 43
+d 3 44
+d 3 45
+d 3 46
+d 3 47
+d 3 48
+d 3 49
+d 3 50
+d 3 51
+d 3 52
+d 3 53
+d 3 54
+d 3 55
+d 3 56
+d 3 57
+d 3 58
+d 1 32
+d 1 33
+d 1 34
+d 1 35
+d 1 36
+d 1 37
+d 5 25
+d 5 26
+d 5 27
+d 5 28
+d 5 29
+d 5 30
+d 5 31
+d 5 32
+d 5 33
+d 5 34
+d 5 35
+d 5 36
+d 5 37
+d 5 38
+d 5 39
+d 5 40
+d 5 41
+d 5 42
+d 5 43
+d 5 44
+d 5 45
+d 5 46
+d 1 38
+d 1 39
+d 1 40
+d 1 41
+d 1 42
+d 1 43
+d 1 44
+d 1 45
+d 1 46
+d 1 47
+d 1 48
+d 1 49
+d 1 50
+d 1 51
+d 1 52
+d 1 53
+d 1 54
+d 1 55
+d 1 56
+d 1 57
+d 1 58
+d 1 59
+d 1 60
+d 1 61
+d 1 62
+d 1 63
+d 1 64
+d 1 65
+d 1 66
+d 1 67
+d 1 68
+d 1 69
+d 1 70
+d 1 71
+d 1 72
+d 1 73
+d 1 74
+d 1 75
+d 1 76
+d 1 77
+d 1 78
+d 1 79
+d 1 80
+d 1 81
+d 1 82
+d 1 83
+d 1 84
+d 1 85
+d 1 86
+d 1 87
+d 1 88
+d 1 89
+d 1 90
+d 1 91
+d 1 92
+d 1 93
+d 1 94
+d 1 95
+d 1 96
+d 1 97
+d 1 98
+d 1 99
+d 1 100
+d 1 101
+d 1 102
+d 1 103
+d 1 104
+d 1 105
+d 1 106
+d 1 107
+d 1 108
+d 1 109
+d 1 110
+d 1 111
+d 1 112
+d 1 113
+d 1 114
+d 1 115
+d 1 116
+d 1 117
+d 1 118
+d 1 119
+d 1 120
+d 1 121
+d 1 122
+d 1 123
+d 1 124
+d 1 125
+d 1 126
+d 1 127
+d 1 128
+d 1 129
+d 1 130
+d 1 131
+d 1 132
+d 1 133
+d 1 134
+d 1 135
+d 1 136
+d 1 137
+d 1 138
+d 1 139
+d 1 140
+d 1 141
+d 1 142
+d 1 143
+d 1 144
+d 1 145
+d 1 146
+d 1 147
+d 1 148
+d 1 149
+d 1 150
+d 1 151
+d 1 152
+d 1 153
+d 1 154
+d 1 155
+d 1 156
+d 1 157
+d 1 158
+d 1 159
+d 1 160
+d 1 161
+d 1 162
+d 1 163
+d 1 164
+d 1 165
+d 1 166
+d 1 167
+d 1 168
+d 1 169
+d 1 170
+d 1 171
+d 1 172
+d 1 173
+d 1 174
+d 1 175
+d 1 176
+d 1 177
+d 1 178
+d 1 179
+d 1 180
+d 1 181
+d 1 182
+d 1 183
+d 1 184
+d 1 185
+d 1 186
+d 1 187
+d 1 188
+d 1 189
+d 4 33
+d 4 34
+d 4 35
+d 4 36
+d 4 37
+d 4 38
+d 4 39
+d 4 40
+d 4 41
+d 4 42
+d 4 43
+d 4 44
+d 4 45
+d 4 46
+d 4 47
+d 4 48
+d 4 49
+d 4 50
+d 4 51
+d 4 52
+d 4 53
+d 4 54
+d 4 55
+d 4 56
+d 4 57
+d 4 58
+d 4 59
+d 4 60
+d 4 61
+d 4 62
+d 4 63
+d 4 64
+d 4 65
+d 4 66
+d 4 67
+d 4 68
+d 4 69
+d 4 70
+d 4 71
+d 4 72
+d 4 73
+d 4 74
+d 4 75
+d 4 76
+d 4 77
+d 4 78
+d 4 79
+d 4 80
+d 4 81
+d 4 82
+d 4 83
+d 4 84
+d 4 85
+d 4 86
+d 4 87
+d 4 88
+d 4 89
+d 4 90
+d 4 91
+d 4 92
+d 4 93
+d 4 94
+d 4 95
+d 4 96
+d 4 97
+d 4 98
+d 4 99
+d 4 100
+d 4 101
+d 4 102
+d 4 103
+d 4 104
+d 4 105
+d 4 106
+d 4 107
+d 4 108
+d 4 109
+d 4 110
+d 4 111
+d 4 112
+d 4 113
+d 4 114
+d 4 115
+d 4 116
+d 4 117
+d 4 118
+d 4 119
+d 4 120
+d 4 121
+d 4 122
+d 4 123
+d 4 124
+d 4 125
+d 4 126
+d 4 127
+d 4 128
+d 4 129
+d 4 130
+d 4 131
+d 4 132
+d 4 133
+d 4 134
+d 4 135
+d 4 136
+d 4 137
+d 4 138
+d 4 139
+d 4 140
+d 4 141
+d 4 142
+d 4 143
+d 4 144
+d 4 145
+d 4 146
+d 4 147
+d 4 148
+d 4 149
+d 4 150
+d 4 151
+d 4 152
+d 4 153
+d 4 154
+d 4 155
+d 4 156
+d 4 157
+d 4 158
+d 4 159
+d 4 160
+d 4 161
+d 4 162
+d 4 163
+d 4 164
+d 4 165
+d 4 166
+d 4 167
+d 4 168
+d 3 59
+d 3 60
+d 3 61
+d 3 62
+d 3 63
+d 3 64
+d 3 65
+d 3 66
+d 3 67
+d 3 68
+d 3 69
+d 3 70
+d 3 71
+d 3 72
+d 3 73
+d 3 74
+d 3 75
+d 3 76
+d 3 77
+d 3 78
+d 3 79
+d 3 80
+d 3 81
+d 3 82
+d 3 83
+d 3 84
+d 3 85
+d 3 86
+d 3 87
+d 3 88
+d 3 89
+d 3 90
+d 3 91
+d 3 92
+d 3 93
+d 3 94
+d 3 95
+d 3 96
+d 3 97
+d 3 98
+d 3 99
+d 3 100
+d 3 101
+d 3 102
+d 3 103
+d 3 104
+d 3 105
+d 3 106
+d 3 107
+d 3 108
+d 3 109
+d 3 110
+d 3 111
+d 3 112
+d 3 113
+d 3 114
+d 3 115
+d 3 116
+d 3 117
+d 3 118
+d 3 119
+d 3 120
+d 3 121
+d 3 122
+d 3 123
+d 3 124
+d 3 125
+d 3 126
+d 3 127
+d 3 128
+d 3 129
+d 3 130
+d 3 131
+d 3 132
+d 3 133
+d 3 134
+d 3 135
+d 3 136
+d 3 137
+d 3 138
+d 3 139
+d 3 140
+d 3 141
+d 3 142
+d 3 143
+d 3 144
+d 3 145
+d 3 146
+d 3 147
+d 3 148
+d 3 149
+d 3 150
+d 3 151
+d 3 152
+d 3 153
+d 3 154
+d 3 155
+d 3 156
+d 3 157
+d 3 158
+d 3 159
+d 3 160
+d 3 161
+d 3 162
+d 3 163
+d 3 164
+d 3 165
+d 3 166
+d 3 167
+d 3 168
+d 3 169
+d 3 170
+d 3 171
+d 3 172
+d 3 173
+d 3 174
+d 3 175
+d 3 176
+d 3 177
+d 3 178
+d 3 179
+d 3 180
+d 3 181
+d 3 182
+d 3 183
+d 3 184
+d 3 185
+d 3 186
+d 3 187
+d 3 188
+d 3 189
+d 3 190
+d 3 191
+d 3 192
+d 3 193
+d 3 194
+d 3 195
+d 3 196
+d 3 197
+d 3 198
+d 3 199
+d 3 200
+d 1 190
+d 1 191
+d 1 192
+d 1 193
+d 1 194
+d 1 195
+d 1 196
+d 1 197
+d 1 198
+d 1 199
+d 1 200
+d 4 169
+d 4 170
+d 4 171
+d 4 172
+d 4 173
+d 4 174
+d 4 175
+d 4 176
+d 4 177
+d 4 178
+d 4 179
+d 4 180
+d 4 181
+d 4 182
+d 4 183
+d 4 184
+d 4 185
+d 4 186
+d 4 187
+d 4 188
+d 4 189
+d 4 190
+d 4 191
+d 4 192
+d 4 193
+d 4 194
+d 4 195
+d 4 196
+d 4 197
+d 4 198
+d 4 199
+d 4 200
+d 5 47
+d 5 48
+d 5 49
+d 5 50
+d 5 51
+d 5 52
+d 5 53
+d 5 54
+d 5 55
+d 5 56
+d 5 57
+d 5 58
+d 5 59
+d 5 60
+d 5 61
+d 5 62
+d 5 63
+d 5 64
+d 5 65
+d 5 66
+d 5 67
+d 5 68
+d 5 69
+d 5 70
+d 5 71
+d 5 72
+d 5 73
+d 5 74
+d 5 75
+d 5 76
+d 5 77
+d 5 78
+d 5 79
+d 5 80
+d 5 81
+d 5 82
+d 5 83
+d 5 84
+d 5 85
+d 5 86
+d 5 87
+d 5 88
+d 5 89
+d 5 90
+d 5 91
+d 5 92
+d 5 93
+d 5 94
+d 5 95
+d 5 96
+d 5 97
+d 5 98
+d 5 99
+d 5 100
+d 5 101
+d 5 102
+d 5 103
+d 5 104
+d 5 105
+d 5 106
+d 5 107
+d 5 108
+d 5 109
+d 5 110
+d 5 111
+d 5 112
+d 5 113
+d 5 114
+d 5 115
+d 5 116
+d 5 117
+d 5 118
+d 5 119
+d 5 120
+d 5 121
+d 5 122
+d 5 123
+d 5 124
+d 5 125
+d 5 126
+d 5 127
+d 5 128
+d 5 129
+d 5 130
+d 5 131
+d 5 132
+d 5 133
+d 5 134
+d 5 135
+d 5 136
+d 5 137
+d 5 138
+d 5 139
+d 5 140
+d 5 141
+d 5 142
+d 5 143
+d 5 144
+d 5 145
+d 5 146
+d 5 147
+d 5 148
+d 5 149
+d 5 150
+d 5 151
+d 5 152
+d 5 153
+d 5 154
+d 5 155
+d 5 156
+d 5 157
+d 5 158
+d 5 159
+d 5 160
+d 5 161
+d 5 162
+d 5 163
+d 5 164
+d 5 165
+d 5 166
+d 5 167
+d 5 168
+d 5 169
+d 5 170
+d 5 171
+d 5 172
+d 5 173
+d 5 174
+d 5 175
+d 5 176
+d 5 177
+d 5 178
+d 5 179
+d 5 180
+d 5 181
+d 5 182
+d 5 183
+d 5 184
+d 5 185
+d 5 186
+d 5 187
+d 5 188
+d 5 189
+d 5 190
+d 5 191
+d 5 192
+d 5 193
+d 5 194
+d 5 195
+d 5 196
+d 5 197
+d 5 198
+d 5 199
+d 5 200

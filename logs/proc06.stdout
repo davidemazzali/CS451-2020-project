@@ -1,5 +1,5 @@
-My PID is 32453.
-Use 'kill -SIGINT 32453 ' or 'kill -SIGTERM 32453 ' to stop processing packets.
+My PID is 7213.
+Use 'kill -SIGINT 7213 ' or 'kill -SIGTERM 7213 ' to stop processing packets.
 My id is 6.
 List of hosts is:
 1, 127.0.0.1, 11001
@@ -9,16 +9,415 @@ List of hosts is:
 5, 127.0.0.1, 11005
 6, 127.0.0.1, 11006
 7, 127.0.0.1, 11007
-8, 127.0.0.1, 11008
-9, 127.0.0.1, 11009
-10, 127.0.0.1, 11010
 Barrier: 127.0.0.1:10000
 Signal: 127.0.0.1:11000
 Output: /media/sf_CS451-2020-project/logs/proc06.output
-Config: /tmp/tmpkeou0n_7
+Config: /tmp/tmp3l8apcb2
 Waiting for all processes for finish initialization
 Accessing barrier...
 Broadcasting messages...
-Signaling end of broadcasting messages
-[23.210s][warning][os,thread] Failed to start thread - pthread_create failed (EAGAIN) for attributes: stacksize: 1024k, guardsize: 0k, detached.
-[122.255s][warning][os,thread] Failed to start thread - pthread_create failed (EAGAIN) for attributes: stacksize: 1024k, guardsize: 0k, detached.
+(6) broadcast message (0)
+(6) broadcast message (1)
+(6) broadcast message (2)
+(6) broadcast message (3)
+(6) broadcast message (4)
+(6) broadcast message (5)
+(6) broadcast message (6)
+(6) broadcast message (7)
+(6) broadcast message (8)
+(6) broadcast message (9)
+(6) broadcast message (10)
+(6) broadcast message (11)
+(6) broadcast message (12)
+(6) broadcast message (13)
+(6) broadcast message (14)
+(6) broadcast message (15)
+(6) broadcast message (16)
+(6) broadcast message (17)
+(6) broadcast message (18)
+(6) broadcast message (19)
+(6) broadcast message (20)
+(6) broadcast message (21)
+(6) broadcast message (22)
+(6) broadcast message (23)
+(6) broadcast message (24)
+(6) broadcast message (25)
+(6) broadcast message (26)
+(6) broadcast message (27)
+(6) broadcast message (28)
+(6) broadcast message (29)
+(6) broadcast message (30)
+(6) broadcast message (31)
+(6) broadcast message (32)
+(6) broadcast message (33)
+(6) broadcast message (34)
+(6) broadcast message (35)
+(6) broadcast message (36)
+(6) broadcast message (37)
+(6) broadcast message (38)
+(6) broadcast message (39)
+(6) broadcast message (40)
+(6) broadcast message (41)
+(6) broadcast message (42)
+(6) broadcast message (43)
+(6) broadcast message (44)
+(6) broadcast message (45)
+(6) broadcast message (46)
+(6) broadcast message (47)
+(6) broadcast message (48)
+(6) broadcast message (49)
+(6) broadcast message (50)
+(6) broadcast message (51)
+(6) broadcast message (52)
+(6) broadcast message (53)
+(6) broadcast message (54)
+(6) broadcast message (55)
+(6) broadcast message (56)
+(6) broadcast message (57)
+(6) broadcast message (58)
+(6) broadcast message (59)
+(6) broadcast message (60)
+(6) broadcast message (61)
+(6) broadcast message (62)
+(6) broadcast message (63)
+(6) broadcast message (64)
+(6) broadcast message (65)
+(6) broadcast message (66)
+(6) broadcast message (67)
+(6) broadcast message (68)
+(6) broadcast message (69)
+(6) broadcast message (70)
+(6) broadcast message (71)
+(6) broadcast message (72)
+(6) broadcast message (73)
+(6) broadcast message (74)
+(6) broadcast message (75)
+(6) broadcast message (76)
+(6) broadcast message (77)
+(6) broadcast message (78)
+(6) broadcast message (79)
+(6) broadcast message (80)
+(6) broadcast message (81)
+(6) broadcast message (82)
+(6) broadcast message (83)
+(6) broadcast message (84)
+(6) broadcast message (85)
+(6) broadcast message (86)
+(6) broadcast message (87)
+(6) broadcast message (88)
+(6) broadcast message (89)
+(6) broadcast message (90)
+(6) broadcast message (91)
+(6) broadcast message (92)
+(6) broadcast message (93)
+(6) broadcast message (94)
+(6) broadcast message (95)
+(6) broadcast message (96)
+(6) broadcast message (97)
+(6) broadcast message (98)
+(6) broadcast message (99)
+(6) broadcast message (100)
+(6) broadcast message (101)
+(6) broadcast message (102)
+(6) broadcast message (103)
+(6) broadcast message (104)
+(6) broadcast message (105)
+(6) broadcast message (106)
+(6) broadcast message (107)
+(6) broadcast message (108)
+(6) broadcast message (109)
+(6) broadcast message (110)
+(6) broadcast message (111)
+(6) broadcast message (112)
+(6) broadcast message (113)
+(6) broadcast message (114)
+(6) broadcast message (115)
+(6) broadcast message (116)
+(6) broadcast message (117)
+(6) broadcast message (118)
+(6) broadcast message (119)
+(6) broadcast message (120)
+(6) broadcast message (121)
+(6) broadcast message (122)
+(6) broadcast message (123)
+(6) broadcast message (124)
+(6) broadcast message (125)
+(6) broadcast message (126)
+(6) broadcast message (127)
+(6) broadcast message (128)
+(6) broadcast message (129)
+(6) broadcast message (130)
+(6) broadcast message (131)
+(6) broadcast message (132)
+(6) broadcast message (133)
+(6) broadcast message (134)
+(6) broadcast message (135)
+(6) broadcast message (136)
+(6) broadcast message (137)
+(6) broadcast message (138)
+(6) broadcast message (139)
+(6) broadcast message (140)
+(6) broadcast message (141)
+(6) broadcast message (142)
+(6) broadcast message (143)
+(6) broadcast message (144)
+(6) broadcast message (145)
+(6) broadcast message (146)
+(6) broadcast message (147)
+(6) broadcast message (148)
+(6) broadcast message (149)
+(6) broadcast message (150)
+(6) broadcast message (151)
+(6) broadcast message (152)
+(6) broadcast message (153)
+(6) broadcast message (154)
+(6) broadcast message (155)
+(6) broadcast message (156)
+(6) broadcast message (157)
+(6) broadcast message (158)
+(6) broadcast message (159)
+(6) broadcast message (160)
+(6) broadcast message (161)
+(6) broadcast message (162)
+(6) broadcast message (163)
+(6) broadcast message (164)
+(6) broadcast message (165)
+(6) broadcast message (166)
+(6) broadcast message (167)
+(6) broadcast message (168)
+(6) broadcast message (169)
+(6) broadcast message (170)
+(6) broadcast message (171)
+(6) broadcast message (172)
+(6) broadcast message (173)
+(6) broadcast message (174)
+(6) broadcast message (175)
+(6) broadcast message (176)
+(6) broadcast message (177)
+(6) broadcast message (178)
+(6) broadcast message (179)
+(6) broadcast message (180)
+(6) broadcast message (181)
+(6) broadcast message (182)
+(6) broadcast message (183)
+(6) broadcast message (184)
+(6) broadcast message (185)
+(6) broadcast message (186)
+(6) broadcast message (187)
+(6) broadcast message (188)
+(6) broadcast message (189)
+(6) broadcast message (190)
+(6) broadcast message (191)
+(6) broadcast message (192)
+(6) broadcast message (193)
+(6) broadcast message (194)
+(6) broadcast message (195)
+(6) broadcast message (196)
+(6) broadcast message (197)
+(6) broadcast message (198)
+(6) broadcast message (199)
+(6) Signaling end of broadcasting messages
+Immediately stopping network packet processing.
+Writing output.
+b 1
+b 2
+b 3
+b 4
+b 5
+b 6
+b 7
+b 8
+b 9
+b 10
+b 11
+b 12
+b 13
+b 14
+b 15
+b 16
+b 17
+b 18
+b 19
+b 20
+b 21
+b 22
+b 23
+b 24
+b 25
+b 26
+b 27
+b 28
+b 29
+b 30
+b 31
+b 32
+b 33
+b 34
+b 35
+b 36
+b 37
+b 38
+b 39
+b 40
+b 41
+b 42
+b 43
+b 44
+b 45
+b 46
+b 47
+b 48
+b 49
+b 50
+b 51
+b 52
+b 53
+b 54
+b 55
+b 56
+b 57
+b 58
+b 59
+b 60
+b 61
+b 62
+b 63
+b 64
+b 65
+b 66
+b 67
+b 68
+b 69
+b 70
+b 71
+b 72
+b 73
+b 74
+b 75
+b 76
+b 77
+b 78
+b 79
+b 80
+b 81
+b 82
+b 83
+b 84
+b 85
+b 86
+b 87
+b 88
+b 89
+b 90
+b 91
+b 92
+b 93
+b 94
+b 95
+b 96
+b 97
+b 98
+b 99
+b 100
+b 101
+b 102
+b 103
+b 104
+b 105
+b 106
+b 107
+b 108
+b 109
+b 110
+b 111
+b 112
+b 113
+b 114
+b 115
+b 116
+b 117
+b 118
+b 119
+b 120
+b 121
+b 122
+b 123
+b 124
+b 125
+b 126
+b 127
+b 128
+b 129
+b 130
+b 131
+b 132
+b 133
+b 134
+b 135
+b 136
+b 137
+b 138
+b 139
+b 140
+b 141
+b 142
+b 143
+b 144
+b 145
+b 146
+b 147
+b 148
+b 149
+b 150
+b 151
+b 152
+b 153
+b 154
+b 155
+b 156
+b 157
+b 158
+b 159
+b 160
+b 161
+b 162
+b 163
+b 164
+b 165
+b 166
+b 167
+b 168
+b 169
+b 170
+b 171
+b 172
+b 173
+b 174
+b 175
+b 176
+b 177
+b 178
+b 179
+b 180
+b 181
+b 182
+b 183
+b 184
+b 185
+b 186
+b 187
+b 188
+b 189
+b 190
+b 191
+b 192
+b 193
+b 194
+b 195
+b 196
+b 197
+b 198
+b 199
+b 200
+d 2 1
+d 2 2
