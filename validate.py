@@ -8,6 +8,7 @@ import tempfile
 import threading, subprocess
 import barrier, finishedSignal
 
+import sys
 
 import signal
 import random
@@ -253,31 +254,34 @@ class StressTest:
         while successfulAttempts < self.attempts:
             proc = random.choice(selectProc)
             op = random.choice(selectOp)
-            info = self.processesInfo[proc]
+            if True: #proc != 1:# and op != ProcessState.STOPPED:
+                info = self.processesInfo[proc]
 
-            with info.lock:
-                if ProcessInfo.validStateTransition(info.state, op):
+                with info.lock:
+                    if ProcessInfo.validStateTransition(info.state, op):
 
-                    if op == ProcessState.TERMINATED:
-                        reserved = self.terminatedProcs.reserve()
-                        if reserved:
-                            selectProc.remove(proc)
-                        else:
-                            continue
+                        if op == ProcessState.TERMINATED:
+                            reserved = self.terminatedProcs.reserve()
+                            if reserved:
+                                selectProc.remove(proc)
+                            else:
+                                continue
 
-                    time.sleep(float(random.randint(50, 500)) / 1000.0)
-                    info.handle.send_signal(ProcessInfo.stateToSignal(op))
-                    info.state = op
-                    successfulAttempts += 1
-                    print("Sending {} to process {}".format(ProcessInfo.stateToSignalStr(op), proc))
+                        time.sleep(float(random.randint(50, 500)) / 1000.0)
+                        info.handle.send_signal(ProcessInfo.stateToSignal(op))
+                        info.state = op
+                        successfulAttempts += 1
+                        print("Sending {} to process {}".format(ProcessInfo.stateToSignalStr(op), proc))
 
-                    # if op == ProcessState.TERMINATED and proc not in terminatedProcs:
-                    #     if len(terminatedProcs) < maxTerminatedProcesses:
+                        # if op == ProcessState.TERMINATED and proc not in terminatedProcs:
+                        #     if len(terminatedProcs) < maxTerminatedProcesses:
 
-                    #         terminatedProcs.add(proc)
+                        #         terminatedProcs.add(proc)
 
-                    # if len(terminatedProcs) == maxTerminatedProcesses:
-                    #     break
+                        # if len(terminatedProcs) == maxTerminatedProcesses:
+                        #     break
+            #else:
+                #successfulAttempts += 1
 
     def remainingUnterminatedProcesses(self):
         remaining = []
@@ -350,14 +354,14 @@ def startProcesses(processes, runscript, hostsFilePath, configFilePath, outputDi
         stderrFd = open(os.path.join(outputDirPath, 'proc{:02d}.stderr'.format(pid)), "w")
 
 
-        procs.append((pid, subprocess.Popen(cmd + cmd_ext, stdout=stdoutFd, stderr=stderrFd)))
+        procs.append((pid, subprocess.Popen(cmd + cmd_ext, stdout=sys.stdout, stderr=stderrFd)))
 
     return procs
 
 def main(processes, messages, runscript, broadcastType, logsDir, testConfig):
     # Set tc for loopback
-    tc = TC(testConfig['TC'])
-    print(tc)
+    #tc = TC(testConfig['TC'])
+    #print(tc)
 
     # Start the barrier
     initBarrier = barrier.Barrier(BARRIER_IP, BARRIER_PORT, processes)
@@ -492,8 +496,22 @@ if __name__ == "__main__":
 
     results = parser.parse_args()
 
+    """
+        'TC': {
+            'delay': ('200ms', '50ms'),
+            'loss': ('10%', '25%'),
+            'reordering': ('25%', '50%')
+        },
+
+        'TC': {
+            'delay': ('0ms', '0ms'),
+            'loss': ('0.01%', '0.01%')
+        },
+    """
+
     testConfig = {
         # Network configuration using the tc command
+
         'TC': {
             'delay': ('200ms', '50ms'),
             'loss': ('10%', '25%'),
@@ -502,12 +520,12 @@ if __name__ == "__main__":
 
         # StressTest configuration
         'ST': {
-            'concurrency' : 8, # How many threads are interferring with the running processes
-            'attempts' : 8, # How many interferring attempts each threads does
+            'concurrency' : 0, #8, # How many threads are interferring with the running processes
+            'attempts' :  0, #8, # How many interferring attempts each threads does
             'attemptsDistribution' : { # Probability with which an interferring thread will
                 'STOP': 0.48,          # select an interferring action (make sure they add up to 1)
                 'CONT': 0.48,
-                'TERM':0.04
+                'TERM': 0.04
             }
         }
     }

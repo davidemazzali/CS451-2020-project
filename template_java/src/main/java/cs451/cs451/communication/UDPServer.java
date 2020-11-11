@@ -31,24 +31,27 @@ public class UDPServer extends Thread {
 
             try {
                 serverSocket.receive(inputPacket);
+                //long recTime = System.currentTimeMillis();
+
+                byte[] payload = inputPacket.getData();
+
+                PLMessage msg = PLMessage.getPLMessageFromUdpPayload(payload);
+
+                pl.udpDeliver(msg, -1);
             }
             catch (IOException e) {
                 System.err.println("Error receiving datagram: " + e.getMessage());
             }
-
-            byte[] payload = inputPacket.getData();
-
-            PLMessage msg = PLMessage.getPLMessageFromUdpPayload(payload);
-
-            pl.udpDeliver(msg);
         }
     }
 
-    public synchronized void sendDatagram(byte [] payload, InetAddress recipientIp, int recipientPort) {
+    public synchronized void sendDatagram(byte [] payload, InetAddress recipientIp, int recipientPort, long recTime) {
         DatagramPacket packet = new DatagramPacket(payload, payload.length, recipientIp, recipientPort);
-
         try {
             serverSocket.send(packet);
+            if(recTime != -1) {
+                System.out.println("IT TOOK " + (System.currentTimeMillis()-recTime) + " TO SEND ACK (" + pl.thisHostId + ")");
+            }
         } catch (IOException e) {
             System.err.println("Error sending datagram: " + e.getMessage());
         }

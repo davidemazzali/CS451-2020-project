@@ -3,7 +3,7 @@ package cs451.utils;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 
-public class Host {
+public class Host implements Comparable{
 
     private static final String IP_START_REGEX = "/";
 
@@ -58,4 +58,8 @@ public class Host {
         return port;
     }
 
+    @Override
+    public int compareTo(Object o) {
+        return this.getId() - ((Host)o).getId();
+    }
 }

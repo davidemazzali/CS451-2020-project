@@ -38,7 +38,7 @@ public class Coordinator {
 	    Socket socket = connectToHost(barrierIp, barrierPort);
             InputStream input = socket.getInputStream();
             InputStreamReader reader = new InputStreamReader(input);
-            System.out.println("Accessing barrier...");
+            //System.out.println("Accessing barrier...");
             int character;
             while ((character = reader.read()) != -1) {}
             socket.close();
