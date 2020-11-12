@@ -3,15 +3,15 @@ package cs451.communication;
 import java.io.Serializable;
 
 public class FIFOMessage implements Serializable {
-    private int seqNum;
+    private long seqNum;
     private int idBroadcaster;
 
-    public FIFOMessage(int seqNum, int idBroadcaster) {
+    public FIFOMessage(long seqNum, int idBroadcaster) {
         this.seqNum = seqNum;
         this.idBroadcaster = idBroadcaster;
     }
 
-    public int getSeqNum() {
+    public long getSeqNum() {
         return seqNum;
     }
 

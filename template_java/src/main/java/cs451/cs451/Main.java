@@ -9,23 +9,32 @@ import cs451.utils.Logger;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Scanner;
 
 public class Main {
+    // MSGS_PER_ROUND messages can be broadcast,
+    // but before broadcasting others, the process has to deliver all the messages it has broadcast so far
+    // (see below in main function)
     public static final int MSGS_PER_ROUND = 100;
 
     private static void handleSignal(Logger logger) {
-        //immediately stop network packet processing
+        // telling the logger to ignore attempts to log new events from now on
         logger.accessInterrupted(true);
         //System.out.println("Immediately stopping network packet processing.");
 
-        //write/flush output file if necessary
         //System.out.println("Writing output.");
 
+        // writing the events that have not been logged yet to the output file
         logger.logToOutFile();
+        try {
+            // closing the file writer
+            logger.getWriter().close();
+        } catch (IOException e) {
+            System.err.println("Error closing file writer: " + e.getMessage());
+        }
     }
 
     private static void initSignalHandlers(Logger logger) {
@@ -49,65 +58,81 @@ public class Main {
 
         //System.out.println("My id is " + id + ".");
         //System.out.println("List of hosts is:");
-        for (Host host: parser.hosts()) {
+        //for (Host host: parser.hosts()) {
             //System.out.println(host.getId() + ", " + host.getIp() + ", " + host.getPort());
-        }
+        //}
 
         //System.out.println("Barrier: " + parser.barrierIp() + ":" + parser.barrierPort());
         //System.out.println("Signal: " + parser.signalIp() + ":" + parser.signalPort());
         //System.out.println("Output: " + parser.output());
         // if config is defined; always check before parser.config()
+
+        // default number of messages in case no config is provided
+        long numMsg = 10;
         if (parser.hasConfig()) {
             //System.out.println("Config: " + parser.config());
+            numMsg = readNumMsg(parser.config()); // read the number of messages to broadcast
         }
 
         Coordinator coordinator = new Coordinator(parser.myId(), parser.barrierIp(), parser.barrierPort(), parser.signalIp(), parser.signalPort());
 
         HostsParser hosts = parser.getHostsParser();
+        // ensure hosts are ordered by ID
         Collections.sort(hosts.getHosts());
 
-        Host thisHost = hosts.getHostById(id);
+        // copy of this host
+        Host thisHost = HostsParser.getHostById(id);
 
-        int numMsg = readNumMsg(parser.config());
+        // instantiate logger
         Logger logger = new Logger(parser.output(), hosts.getHosts().size(), numMsg, thisHost.getId());
+
+        // instantiate the FIFO broadcast layer
         FIFOBroadcast fifo = new FIFOBroadcast(thisHost.getId(), thisHost.getPort(), (ArrayList)parser.hosts(), logger);
-        //UniformReliableBroadcast urb = new UniformReliableBroadcast(thisHost.getId(), thisHost.getPort(), (ArrayList)parser.hosts(), null, logger);
 
         Main.initSignalHandlers(logger);
 
         //System.out.println("Waiting for all processes for finish initialization");
+        // waiting for all processes to finish initialization
         coordinator.waitOnBarrier();
 
         //System.out.println("Broadcasting messages...");
 
-        //int numMsg = readNumMsg(parser.config());
-        int numHosts = parser.hosts().size();
-        for(int i = 0; i < numMsg; i++) {
-            //System.out.println("(" + thisHost.getId() + ") broadcast message (" + i + ")");
-            //urb.broadcast(null);
+        int numHosts = parser.hosts().size(); // number of hosts in the network
+        // begin FIFO-broadcasting messages
+        for(long i = 0; i < numMsg; i++) {
             fifo.broadcast();
 
-            if((i+1) % MSGS_PER_ROUND == 0) {
-                int tempOwnDel = logger.accessOwnDeliveredMsgs(Logger.GET);
-                int tempNumBroad = logger.accessBroadcastMsgs(Logger.GET);
+            // get from logger how many of the messages broadcast by this process it has also delivered
+            long tempOwnDel = logger.accessOwnDeliveredMsgs(Logger.GET);
+            // get from logger the number of broadcast messages
+            long tempNumBroad = logger.accessBroadcastMsgs(Logger.GET);
 
+            if(tempNumBroad - tempOwnDel > MSGS_PER_ROUND) {
+                synchronized (logger) {
+                    // then wait for the logger to tell when the remaining ones are delivered
+                    logger.wait();
+                }
+            }
+            /*
+            if((i+1) % MSGS_PER_ROUND == 0) { // if the current round has ended
+                // get from logger how many of the messages broadcast by this process it has also delivered
+                long tempOwnDel = logger.accessOwnDeliveredMsgs(Logger.GET);
+                // get from logger the number of broadcast messages
+                long tempNumBroad = logger.accessBroadcastMsgs(Logger.GET);
+
+                // if this process has not delivered yet some of the messages it has broadcast
                 if(tempOwnDel < tempNumBroad) {
                     synchronized (logger) {
+                        // then wait for the logger to tell when the remaining ones are delivered
                         logger.wait();
                     }
                 }
             }
-
-            /*
-            if(tempNumDel <= Math.floor(((double)tempNumBroad)/2.0)) {
-                synchronized (logger) {
-                    logger.wait();
-                }
-            }
-             */
+            */
         }
         
         //System.out.println("(" + thisHost.getId() + ") Signaling end of broadcasting messages");
+        // signalling end of broadcasting messages
         coordinator.finishedBroadcasting();
 
         while (true) {
@@ -116,8 +141,10 @@ public class Main {
         }
     }
 
-    private static int readNumMsg(String path) {
-        int numMsg = 0;
+    private static long readNumMsg(String path) {
+        // read the number of messages to broadcast
+
+        long numMsg = 0;
         File file = new File(path);
         Scanner sc = null;
         try {

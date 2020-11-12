@@ -8,22 +8,27 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.Semaphore;
 
-public class Logger extends Thread{
+public class Logger {
     private FileWriter writer;
     private List<String> logEvents;
     private boolean interrupted;
-    private int deliveredMsgs;
-    private int ownDeliveredMsgs;
-    private int broadcastMsgs;
+    private long deliveredMsgs;
+    private long ownDeliveredMsgs;
+    private long broadcastMsgs;
     private int numHosts;
-    private int numMsgs;
+    private long numMsgs;
     private int thisHostId;
+    private Semaphore logSem; // to regulate access to logEvents
 
     public static final int GET = 0;
     public static final int INC = 1;
 
-    public Logger(String path, int numHosts, int numMsgs, int thisHostId) {
+    // max number of events not written to file yet
+    private static final int MAX_SIZE_LOG = 10000;
+
+    public Logger(String path, int numHosts, long numMsgs, int thisHostId) {
         writer = null;
         try {
             writer = new FileWriter(path);
@@ -35,99 +40,107 @@ public class Logger extends Thread{
         deliveredMsgs = 0;
         ownDeliveredMsgs = 0;
         broadcastMsgs = 0;
+        logSem = new Semaphore(1, true);
+
         this.numHosts = numHosts;
         this.numMsgs = numMsgs;
         this.thisHostId = thisHostId;
-
     }
 
-    public void logBroadcast(int seqNum) {
-        //System.out.println("---------------------- b " + seqNum);
+    public void logBroadcast(long seqNum) {
+        // check if the event can be logged or if termination signal has been received
         if(!accessInterrupted(false)) {
+
+            // increment number of broadcast messages
             accessBroadcastMsgs(INC);
+
+            try {
+                logSem.acquire();
+            } catch (InterruptedException e) {
+                System.err.println("Error acquiring log semaphore: " + e.getMessage());
+            }
+
             logEvents.add("b " + seqNum);
+            if(logEvents.size() >= MAX_SIZE_LOG) { // if logEvent has reached maximum allowed capacity
+                // write to file
+                logToOutFile();
+            }
+
+            logSem.release();
         }
     }
 
-    public void logSend(int recipientId, int seqNum) {
-        //System.out.println("---------------------- s " + recipientId + " " + seqNum);
+    // synchronized method because deliveries are asynchronous
+    public synchronized void logDeliver(int senderId, long seqNum) {
+        // check if the event can be logged or if termination signal has been received
         if(!accessInterrupted(false)) {
-            logEvents.add("s " + recipientId + " " + seqNum);
-        }
-    }
 
-    /*
-    logEvents.add("d " + senderId + " " + seqNum);
-            int tempNumDel = accessDeliveredMsgs(INC);
-            int tempNumBroad = accessBroadcastMsgs(GET);
-            System.out.println("(" + thisHostId + ") " + tempNumDel);
+            // increment number of delivered messages and get it
+            long tempNumDel = accessDeliveredMsgs(INC);
 
-            int tempOwnDel = -1;
+            try {
+                logSem.acquire();
+            } catch (InterruptedException e) {
+                System.err.println("Error acquiring log semaphore: " + e.getMessage());
+            }
+
+            logEvents.add("d " + senderId + " " + seqNum);
+            if(logEvents.size() >= MAX_SIZE_LOG) { // if logEvent has reached maximum allowed capacity
+                // write to file
+                logToOutFile();
+            }
+
+            logSem.release();
+
+            if(tempNumDel % 100 == 0) {
+                System.out.println("(" + thisHostId + ") " + tempNumDel);
+            }
+
+            // get number of broadcast messages
+            long tempNumBroad = accessBroadcastMsgs(GET);
+
+            long tempOwnDel = -1;
             if(senderId == thisHostId) {
+                // if the message was broadcast my this process,
+                // increment the number of its own messages it has delivered and get it
                 tempOwnDel = accessOwnDeliveredMsgs(INC);
             }
             if(tempOwnDel != -1 && tempOwnDel == tempNumBroad) {
                 synchronized (this) {
+                    // if this process has delivered all the messages it has broadcast, tell the main it can continue
                     this.notify();
                 }
             }
-     */
 
-    public synchronized void logDeliver(int senderId, int seqNum) {
-        //System.out.println("---------------------- d " + senderId + " " + seqNum);
-        if(!accessInterrupted(false)) {
             /*
-            logEvents.add("d " + senderId + " " + seqNum);
-            int tempNumDel = accessDeliveredMsgs(INC);
-            int tempNumBroad = accessBroadcastMsgs(GET);
-            System.out.println("(" + thisHostId + ") " + tempNumDel);
-
-            int tempOwnDel = -1;
-            if(senderId == thisHostId) {
-                tempOwnDel = accessOwnDeliveredMsgs(INC);
-            }
-            if(tempNumDel > (tempNumBroad+1)*Math.floor(((double)numHosts)/2.0)) {
-                synchronized (this) {
-                    this.notify();
-                }
-            }
-            */
-            logEvents.add("d " + senderId + " " + seqNum);
-            int tempNumDel = accessDeliveredMsgs(INC);
-            int tempNumBroad = accessBroadcastMsgs(GET);
-            System.out.println("(" + thisHostId + ") " + tempNumDel);
-
-            int tempOwnDel = -1;
-            if(senderId == thisHostId) {
-                tempOwnDel = accessOwnDeliveredMsgs(INC);
-            }
-            if(tempOwnDel != -1 && tempOwnDel == tempNumBroad) {
-                synchronized (this) {
-                    this.notify();
-                }
-            }
-
             if(tempNumDel == numHosts*numMsgs) {
                 System.out.println(thisHostId + " IS DONE!");
             }
+            */
         }
     }
 
     public void logToOutFile() {
         if(writer != null) {
             try {
+                // write all events to file
                 for (String event : logEvents) {
                     writer.write(event + "\n");
                     //System.out.println(event);
                 }
-                writer.close();
+
+                // garbage collect logEvents
+                logEvents = new ArrayList<>();
             }
             catch(IOException e) {
-                System.err.println("Error occurred print log events to output file");
+                System.err.println("Error occurred printing log events to output file: " + e.getMessage());
             }
         }
     }
 
+    // thread-safe method for signalling when no new events can be logged
+    // use actual parameter true to interrupt to forbid new logs,
+    // use actual parameter false to see if logging has been forbidden
     public synchronized boolean accessInterrupted(boolean interrupt) {
         if(interrupt) {
             interrupted = true;
@@ -135,7 +148,9 @@ public class Logger extends Thread{
         return interrupted;
     }
 
-    public synchronized int accessBroadcastMsgs(int op) {
+    // thread-safe method for accessing broadcastMsgs field
+    // allowed operations: get and increment
+    public synchronized long accessBroadcastMsgs(int op) {
         switch(op) {
             case GET:
                 return broadcastMsgs;
@@ -147,7 +162,9 @@ public class Logger extends Thread{
         }
     }
 
-    public synchronized int accessDeliveredMsgs(int op) {
+    // thread-safe method for accessing deliveredMsgs field
+    // allowed operations: get and increment
+    public synchronized long accessDeliveredMsgs(int op) {
         switch (op) {
             case GET:
                 return deliveredMsgs;
@@ -159,7 +176,9 @@ public class Logger extends Thread{
         }
     }
 
-    public synchronized int accessOwnDeliveredMsgs(int op) {
+    // thread-safe method for accessing ownDeliveredMsgs field
+    // allowed operations: get and increment
+    public synchronized long accessOwnDeliveredMsgs(int op) {
         switch (op) {
             case GET:
                 return ownDeliveredMsgs;
@@ -169,5 +188,9 @@ public class Logger extends Thread{
             default:
                 return -1;
         }
+    }
+
+    public FileWriter getWriter() {
+        return writer;
     }
 }

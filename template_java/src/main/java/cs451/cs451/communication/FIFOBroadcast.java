@@ -9,10 +9,10 @@ import java.util.HashMap;
 public class FIFOBroadcast {
     private UniformReliableBroadcast urb;
 
-    private int nextSeqNum;
+    private long nextSeqNum;
     private int thisHostId;
-    private HashMap<Integer, HashMap<Integer, FIFOMessage>> pending;
-    private int [] next;
+    private HashMap<Integer, HashMap<Long, FIFOMessage>> pending;
+    private long [] next;
 
     private Logger logger;
 
@@ -21,7 +21,7 @@ public class FIFOBroadcast {
         this.thisHostId = thisHostId;
 
         pending = new HashMap<>();
-        next = new int[hosts.size()];
+        next = new long[hosts.size()];
         for(int id = 1; id <= hosts.size(); id++) {
             next[id - 1] = 1;
         }
@@ -33,24 +33,26 @@ public class FIFOBroadcast {
 
     public void broadcast() {
         FIFOMessage msg = new FIFOMessage(this.getNextSeqNum(), thisHostId);
+        //logger.logBroadcast(msg.getSeqNum());
         urb.broadcast(msg);
-
-        logger.logBroadcast(msg.getSeqNum());
     }
 
     public synchronized void urbDeliver(FIFOMessage msg) {
         if(!pending.containsKey(msg.getIdBroadcaster())) {
             pending.put(msg.getIdBroadcaster(), new HashMap<>());
         }
-        pending.get(msg.getIdBroadcaster()).put(msg.getSeqNum(), msg);
 
-        FIFOMessage msgToDeliver = this.canDeliver(msg.getIdBroadcaster());
-        while(msgToDeliver != null) {
-            next[msg.getIdBroadcaster()-1]++;
-            pending.get(msg.getIdBroadcaster()).remove(msgToDeliver.getSeqNum());
-            this.deliver(msgToDeliver);
+        if(msg.getSeqNum() >= next[msg.getIdBroadcaster()-1]) {
+            pending.get(msg.getIdBroadcaster()).put(msg.getSeqNum(), msg);
 
-            msgToDeliver = this.canDeliver(msg.getIdBroadcaster());
+            FIFOMessage msgToDeliver = this.canDeliver(msg.getIdBroadcaster());
+            while (msgToDeliver != null) {
+                next[msg.getIdBroadcaster() - 1]++;
+                pending.get(msg.getIdBroadcaster()).remove(msgToDeliver.getSeqNum());
+                this.deliver(msgToDeliver);
+
+                msgToDeliver = this.canDeliver(msg.getIdBroadcaster());
+            }
         }
     }
 
@@ -59,7 +61,7 @@ public class FIFOBroadcast {
     }
 
     private FIFOMessage canDeliver(int idBroadcaster) {
-        for(int seqNum : pending.get(idBroadcaster).keySet()) {
+        for(long seqNum : pending.get(idBroadcaster).keySet()) {
             if(seqNum == next[idBroadcaster-1]) {
                 return pending.get(idBroadcaster).get(seqNum);
             }
@@ -68,8 +70,8 @@ public class FIFOBroadcast {
         return null;
     }
 
-    private int getNextSeqNum() {
-        int seqNum = nextSeqNum;
+    private long getNextSeqNum() {
+        long seqNum = nextSeqNum;
         nextSeqNum++;
         return seqNum;
     }

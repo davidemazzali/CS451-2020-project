@@ -147,22 +147,40 @@ class Validation:
     def checkAll(self, unterminated, continueOnError=True):
         ok = True
         delivered = {}
+        broadcast = {}
         for pid in range(1, self.processes+1):
-            ret, delivered[pid] = self.checkProcess(pid)
+            ret, delivered[pid], broadcast[pid] = self.checkProcess(pid)
             if not ret:
                 ok = False
 
             if not ret and not continueOnError:
                 return False
-        
+
         correct = unterminated
+
+        #print(correct)
+        #print(delivered)
+        #print(broadcast)
 
         for pid in range(1, self.processes+1):
             for m in delivered[pid]:
                 for corr in correct:
                     if m not in delivered[corr]:
                         ok = False
-                        print(m, pid, "(" + ("correct" if pid in correct else "NOT correct") + ")", corr)
+                        print("UNIFORMITY", m, pid, "(" + ("correct" if pid in correct else "NOT correct") + ")", corr)
+        
+        for p in correct:
+            for q in correct:
+                for m in broadcast[p]:
+                    if m not in delivered[q]:
+                        ok = False
+                        print("VALIDITY", p, m, " not delivered by" , q)
+
+        for pid in range(1, self.processes+1):
+            for (s, msg) in delivered[pid]:
+                if (s, msg) not in broadcast[s]:
+                    ok = False
+                    print( "INTEGRITY", pid, "delivered" , (s, msg)," not broadcast by ", s)
 
         for pid in range(1, self.processes+1):
             print('Process', pid, ' delivered', len(delivered[pid]), ' messages')
@@ -191,6 +209,7 @@ class FifoBroadcastValidation(Validation):
         nextMessage = defaultdict(lambda : 1)
         filename = os.path.basename(filePath)
 
+        broadcast = set()
         delivered = set()
         with open(filePath) as f:
             for lineNumber, line in enumerate(f):
@@ -199,6 +218,9 @@ class FifoBroadcastValidation(Validation):
                 # Check broadcast
                 if tokens[0] == 'b':
                     msg = int(tokens[1])
+
+                    broadcast.add((pid, msg))
+
                     if msg != i:
                         print("File {}, Line {}: Messages broadcast out of order. Expected message {} but broadcast message {}".format(filename, lineNumber, i, msg))
                         return False, None
@@ -209,14 +231,22 @@ class FifoBroadcastValidation(Validation):
                     sender = int(tokens[1])
                     msg = int(tokens[2])
 
-                    delivered.add((sender, msg))
-                    
-                    if msg != nextMessage[sender]:
-                        print("File {}, Line {}: Message delivered out of order. Expected message {}, but delivered message {}".format(filename, lineNumber, nextMessage[sender], msg))
-                        return False, None
+                    if sender == pid:
+                        if (pid, msg) not in broadcast:
+                            print(pid, "has delivered ", msg, " before broadcasting it")
+                            return False, None, None
+                    if (sender, msg) in delivered:
+                        print(pid, "has delivered ", (sender, msg), "at least twice")
+                        return False, None, None
                     else:
-                        nextMessage[sender] = msg + 1
-        return True, delivered
+                        delivered.add((sender, msg))
+                        
+                        if msg != nextMessage[sender]:
+                            print("File {}, Line {}: Message delivered out of order. Expected message {}, but delivered message {}".format(filename, lineNumber, nextMessage[sender], msg))
+                            return False, None, None
+                        else:
+                            nextMessage[sender] = msg + 1
+        return True, delivered, broadcast
 
 class LCausalBroadcastValidation(Validation):
     def __init__(self, processes, outputDir, causalRelationships):
@@ -257,6 +287,9 @@ class StressTest:
             if True: #proc != 1:# and op != ProcessState.STOPPED:
                 info = self.processesInfo[proc]
 
+                if op == ProcessState.TERMINATED and successfulAttempts <= self.attempts/2:
+                    continue
+                
                 with info.lock:
                     if ProcessInfo.validStateTransition(info.state, op):
 
@@ -354,14 +387,14 @@ def startProcesses(processes, runscript, hostsFilePath, configFilePath, outputDi
         stderrFd = open(os.path.join(outputDirPath, 'proc{:02d}.stderr'.format(pid)), "w")
 
 
-        procs.append((pid, subprocess.Popen(cmd + cmd_ext, stdout=sys.stdout, stderr=stderrFd)))
+        procs.append((pid, subprocess.Popen(cmd + cmd_ext, stdout=sys.stdout, stderr=sys.stderr)))
 
     return procs
 
 def main(processes, messages, runscript, broadcastType, logsDir, testConfig):
     # Set tc for loopback
-    #tc = TC(testConfig['TC'])
-    #print(tc)
+    tc = TC(testConfig['TC'])
+    print(tc)
 
     # Start the barrier
     initBarrier = barrier.Barrier(BARRIER_IP, BARRIER_PORT, processes)
@@ -520,12 +553,12 @@ if __name__ == "__main__":
 
         # StressTest configuration
         'ST': {
-            'concurrency' : 0, #8, # How many threads are interferring with the running processes
-            'attempts' :  0, #8, # How many interferring attempts each threads does
+            'concurrency' : 8, # How many threads are interferring with the running processes
+            'attempts' :  60, # How many interferring attempts each threads does
             'attemptsDistribution' : { # Probability with which an interferring thread will
                 'STOP': 0.48,          # select an interferring action (make sure they add up to 1)
                 'CONT': 0.48,
-                'TERM': 0.04
+                'TERM': 0.02
             }
         }
     }

@@ -4,17 +4,13 @@ import cs451.parser.HostsParser;
 import cs451.utils.Logger;
 
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Semaphore;
 
 public class PerfectLinks {
-    private static final int ACK = -1;
+    private static final long ACK = -1;
     private static final long INIT_TO = 1000;
     private static final float ALPHA = 0.125f;
     private static final float BETA = 0.25f;
     private static final int K = 4;
-    private static final int MAX_EXPIRED = 10;
-    private static final float BASE_EXP = 2f;
     private static final int WINDOW_MAX_SIZE = 500;
     private static final int WINDOW_INIT_SIZE = 1;
     private static final long NO_PENDING_SLEEP = 10;
@@ -23,9 +19,9 @@ public class PerfectLinks {
     private UDPServer udpServer;
     private BestEffortBroadcast beb;
 
-    private int nextSeqNum;
+    private long nextSeqNum;
     public int thisHostId;
-    private HashMap<Integer, HashMap<Integer, PLMessage>> delivered;
+    private HashMap<Integer, HashMap<Long, PLMessage>> delivered;
     private Retransmit retransmitThread;
     private HashMap<Integer, Recipient> recipients;
 
@@ -54,24 +50,27 @@ public class PerfectLinks {
         accessRecipients(SEND, msg.getIdRecipient(), msg.getSeqNum(), msg);
     }
 
-    public void sendAck(int seqNumToAck, int idRecipient, long recTime) {
+    public void sendAck(long seqNumToAck, int idRecipient, long recTime) {
         PLMessage msg = new PLMessage(ACK, thisHostId, idRecipient, seqNumToAck);
         udpServer.sendDatagram(PLMessage.getUdpPayloadFromPLMessage(msg), HostsParser.getHostById(msg.getIdRecipient()).getIpInet(), HostsParser.getHostById(msg.getIdRecipient()).getPort(), recTime);
     }
 
     public synchronized void udpDeliver(PLMessage msg, long received) {
         if (msg.getSeqNum() != ACK) {
+
             if (!delivered.containsKey(msg.getIdSender()) || !delivered.get(msg.getIdSender()).containsKey(msg.getSeqNum())) {
                 if (delivered.containsKey(msg.getIdSender())) {
                     delivered.get(msg.getIdSender()).put(msg.getSeqNum(), msg);
                 } else {
-                    HashMap<Integer, PLMessage> temp = new HashMap<>();
+                    HashMap<Long, PLMessage> temp = new HashMap<>();
                     temp.put(msg.getSeqNum(), msg);
                     delivered.put(msg.getIdSender(), temp);
                 }
 
                 this.deliver(msg);
             }
+
+            //this.deliver(msg);
 
             this.sendAck(msg.getSeqNum(), msg.getIdSender(), received);
         } else {
@@ -105,8 +104,6 @@ public class PerfectLinks {
                             long retTime = System.currentTimeMillis();
                             msgRet.accessLastRetransmit(PLMessageTransmit.SET, retTime);
 
-
-
                             nextTimeout = Math.min(nextTimeout, msgRet.getRecipientTimeout());
                         } else {
                             nextTimeout = Math.min(nextTimeout, msgRet.getRecipientTimeout() - (now - lastRet));
@@ -115,7 +112,7 @@ public class PerfectLinks {
                 }
 
                 try {
-                    Thread.sleep((long)(nextTimeout)); //*0.5));
+                    Thread.sleep((long)(nextTimeout));
                 } catch (InterruptedException e) {
                     System.err.println("Sleep interrupted: " + e.getMessage());
                 }
@@ -123,8 +120,8 @@ public class PerfectLinks {
         }
     }
 
-    private int getNextSeqNum() {
-        int seqNum = nextSeqNum;
+    private long getNextSeqNum() {
+        long seqNum = nextSeqNum;
         nextSeqNum++;
         return seqNum;
     }
@@ -133,7 +130,7 @@ public class PerfectLinks {
         accessRecipients(ACK_RECEIVED, ackMsg.getIdSender(), ackMsg.getSeqNumToAck(), null);
     }
 
-    private synchronized Object accessRecipients(int op, int idRecipient, int seqNum, PLMessage msg) {
+    private synchronized Object accessRecipients(int op, int idRecipient, long seqNum, PLMessage msg) {
         switch(op) {
             case SEND:
                 if(!recipients.containsKey(idRecipient)) {
@@ -143,8 +140,8 @@ public class PerfectLinks {
                 Recipient rec = recipients.get(idRecipient);
                 int maxWindowSize = rec.accessMaxWindowSize(Recipient.GET, -1);
                 if(maxWindowSize - rec.window.size() > 0) {
-                    udpServer.sendDatagram(PLMessage.getUdpPayloadFromPLMessage(msg), HostsParser.getHostById(msg.getIdRecipient()).getIpInet(), HostsParser.getHostById(msg.getIdRecipient()).getPort(), -1);
                     rec.window.put(seqNum, new PLMessageTransmit(msg, System.currentTimeMillis()));
+                    udpServer.sendDatagram(PLMessage.getUdpPayloadFromPLMessage(msg), HostsParser.getHostById(msg.getIdRecipient()).getIpInet(), HostsParser.getHostById(msg.getIdRecipient()).getPort(), -1);
                     //System.out.println("("+thisHostId +")"+" PUT IN WINDOW " +msg.getSeqNum() + ", window size " + rec.window.size() + "; queuing size " + rec.queuing.size());
                 }
                 else {
@@ -185,7 +182,20 @@ public class PerfectLinks {
                             temp.accessMaxWindowSize(Recipient.UPDATE, 1);
                         }
 
-                        temp.moveFromQueueToWindowOnIncrease();
+                        temp.moveFromQueueToWindow();
+                    }
+                    else {
+                        boolean found = false;
+                        for(PLMessage queuingMsg : temp.queuing) {
+                            if(queuingMsg.getSeqNum() == seqNum) {
+                                found = true;
+                                break;
+                            }
+                        }
+
+                        if(found) {
+                            temp.queuing.removeIf(plMessage -> plMessage.getSeqNum() == seqNum);
+                        }
                     }
                 }
                 return null;
@@ -206,8 +216,8 @@ public class PerfectLinks {
         private final long firstTransmit;
         private long recipientTimeout;
 
-        public static final int GET = 0;
-        public static final int SET = 1;
+        public static final int GET = 2;
+        public static final int SET = 3;
 
         public PLMessageTransmit(PLMessage msg, long transmitTime) {
             this.msg = msg;
@@ -248,7 +258,7 @@ public class PerfectLinks {
         private long timeout;
         private long rtt;
         private long rttVar;
-        private HashMap<Integer, PLMessageTransmit> window;
+        private HashMap<Long, PLMessageTransmit> window;
         private Deque<PLMessage> queuing;
         private int notRetransmitted;
         private int maxWindowSize;
@@ -285,7 +295,7 @@ public class PerfectLinks {
                                 maxWindowSize++;
                                 notRetransmitted = 0;
 
-                                moveFromQueueToWindowOnIncrease();
+                                moveFromQueueToWindow();
                             }
                         }
                         else if(maxWindowSize < WINDOW_MAX_SIZE) {
@@ -293,7 +303,7 @@ public class PerfectLinks {
                                 maxWindowSize++;
                                 notRetransmitted = 0;
 
-                                moveFromQueueToWindowOnIncrease();
+                                moveFromQueueToWindow();
                             }
                         }
                     }
@@ -356,7 +366,7 @@ public class PerfectLinks {
             this.rttVar = rttVar;
         }
 
-        public void moveFromQueueToWindowOnIncrease() {
+        public void moveFromQueueToWindow() {
             while(window.size() < maxWindowSize && queuing.size() > 0) {
                 PLMessage next = queuing.remove();
 

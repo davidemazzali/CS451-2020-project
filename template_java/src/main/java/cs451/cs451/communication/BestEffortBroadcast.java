@@ -9,10 +9,9 @@ public class BestEffortBroadcast {
     private UniformReliableBroadcast urb;
     private PerfectLinks pl;
 
-    private int nextSeqNum;
+    private long nextSeqNum;
     private int thisHostId;
-    //private ArrayList<Host> hosts;
-    private ArrayList<Host> neighbours;
+    private ArrayList<Host> hosts;
 
     private Logger logger;
 
@@ -20,41 +19,8 @@ public class BestEffortBroadcast {
         this.nextSeqNum = 0;
         this.thisHostId = thisHostId;
 
-        neighbours = new ArrayList<>();
-        if(hosts.size() >= 4) {
-            if (hosts.size() % 2 == 1) {
-                int i = 1;
-                boolean overed = false;
-                while (!overed) {
-                    if(i % 2 == 0) {
-                        neighbours.add(hosts.get(((thisHostId - 1) + i) % hosts.size()));
-                    }
-
-                    if(i > hosts.size()) {
-                        overed = true;
-                    }
-                    i++;
-                }
-            }
-            else {
-                int i = 1;
-                boolean overed = false;
-                while (!overed) {
-                    if(i % 2 == 0) {
-                        neighbours.add(hosts.get(((thisHostId - 1) + i) % hosts.size()));
-                    }
-
-                    if(i == hosts.size()) {
-                        overed = true;
-                    }
-                    i++;
-                }
-                neighbours.add(hosts.get(((thisHostId - 1) + 1) % hosts.size()));
-            }
-        }
-        else {
-            neighbours = hosts;
-        }
+        this.hosts = new ArrayList<>();
+        this.hosts = hosts;
 
         this.logger = logger;
 
@@ -62,14 +28,18 @@ public class BestEffortBroadcast {
         pl = new PerfectLinks(thisHostId, port, this, logger);
     }
 
-    public void broadcast(URBMessage payload) {
+    public void broadcast(URBMessage payload, boolean fromFifo) {
         BEBMessage msg = new BEBMessage(this.getNextSeqNum(), thisHostId, payload);
 
-        for(Host host : neighbours) {
-            pl.send(msg, host.getId());
+        if(fromFifo) {
+            logger.logBroadcast(payload.getPayload().getSeqNum());
         }
-
-        //logger.logBroadcast(msg.getSeqNum());
+        for(Host host : hosts) {
+            if(host.getId() != thisHostId) {
+                pl.send(msg, host.getId());
+            }
+        }
+        pl.send(msg, thisHostId);
     }
 
     public synchronized void plDeliver(BEBMessage msg) {
@@ -77,12 +47,11 @@ public class BestEffortBroadcast {
     }
 
     private void deliver(BEBMessage msg) {
-        //logger.logDeliver(msg.getIdSender(), msg.getSeqNum());
         urb.bebDeliver(msg.getPayload());
     }
 
-    private int getNextSeqNum() {
-        int seqNum = nextSeqNum;
+    private long getNextSeqNum() {
+        long seqNum = nextSeqNum;
         nextSeqNum++;
         return seqNum;
     }
