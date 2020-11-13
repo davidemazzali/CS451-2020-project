@@ -26,7 +26,7 @@ public class Logger {
     public static final int INC = 1;
 
     // max number of events not written to file yet
-    private static final int MAX_SIZE_LOG = 10000;
+    private static final int MAX_SIZE_LOG = 1000;
 
     public Logger(String path, int numHosts, long numMsgs, int thisHostId) {
         writer = null;
@@ -92,9 +92,11 @@ public class Logger {
 
             logSem.release();
 
+            /*
             if(tempNumDel % 100 == 0) {
                 System.out.println("(" + thisHostId + ") " + tempNumDel);
             }
+            */
 
             // get number of broadcast messages
             long tempNumBroad = accessBroadcastMsgs(GET);

@@ -14,9 +14,11 @@ public class UniformReliableBroadcast {
 
     private long nextSeqNum;
     private int thisHostId;
-    private HashMap<Integer, HashMap<Long, URBMessage>> delivered;
-    private HashMap<Integer, HashMap<Long, URBMessage>> pending;
-    private HashMap<Integer, HashMap<Long, Integer>> acks;
+
+    // first key is host id, second key is the seq. number of the message
+    private HashMap<Integer, HashMap<Long, URBMessage>> delivered; // store the messages this process has delivered that were originally broadcast by each member of the network
+    private HashMap<Integer, HashMap<Long, URBMessage>> pending; // store the messages this process is waiting to deliver that were originally broadcast by each member of the network
+    private HashMap<Integer, HashMap<Long, Integer>> acks; // store the number of time each message that was originally broadcast by each member of the network has been ACKed
     private int numHosts;
 
     private Logger logger;
@@ -42,12 +44,15 @@ public class UniformReliableBroadcast {
     public void broadcast(FIFOMessage payload) {
         URBMessage msg = new URBMessage(this.getNextSeqNum(), thisHostId, payload);
 
+        // mark message as pending and send it with BEB
+
         accessPending(PUT, msg);
 
         beb.broadcast(msg, true);
     }
 
     public synchronized void bebDeliver(URBMessage msg) {
+        // increment the number of times this message has been ACKed
         if(!acks.containsKey(msg.getIdBroadcaster())) {
             acks.put(msg.getIdBroadcaster(), new HashMap<>());
         }
@@ -60,14 +65,16 @@ public class UniformReliableBroadcast {
             beb.broadcast(msg, false);
         }
 
+        // check if there are messages that can now be delivered
         checkDeliver();
     }
 
     private void checkDeliver() {
         for(HashMap<Long, URBMessage> msgsFromHost : (ArrayList<HashMap<Long, URBMessage>>)accessPending(GET_ALL, null)) {
             for(URBMessage msg : msgsFromHost.values()) {
-                if(canDeliver(msg)) {
-                    if(!delivered.containsKey(msg.getIdBroadcaster()) || !delivered.get(msg.getIdBroadcaster()).containsKey(msg.getSeqNum())) {
+                if(canDeliver(msg)) { // if this message can be delivered
+                    if(!delivered.containsKey(msg.getIdBroadcaster()) || !delivered.get(msg.getIdBroadcaster()).containsKey(msg.getSeqNum())) { // if it has not been delivered yet
+                        // deliver it, garbage collect pending and acks
                         this.deliver(msg);
 
                         accessPending(REMOVE, msg);
@@ -81,6 +88,7 @@ public class UniformReliableBroadcast {
     }
 
     private boolean canDeliver(URBMessage msg) {
+        // if this message has been ACKed more than N/2 times
         boolean res;
         if(!acks.containsKey(msg.getIdBroadcaster()) || !acks.get(msg.getIdBroadcaster()).containsKey(msg.getSeqNum())) {
             res = false;
@@ -102,6 +110,7 @@ public class UniformReliableBroadcast {
         fifo.urbDeliver(msg.getPayload());
     }
 
+    // thread-safe method to get all pending messages, or put a new one, or remove one
     private synchronized Object accessPending(int op, URBMessage msg) {
         switch(op) {
             case GET_ALL:
@@ -141,6 +150,7 @@ public class UniformReliableBroadcast {
         }
     }
 
+    // get next sequence number and increment
     private long getNextSeqNum() {
         long seqNum = nextSeqNum;
         nextSeqNum++;

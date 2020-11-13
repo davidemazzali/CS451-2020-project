@@ -554,11 +554,11 @@ if __name__ == "__main__":
         # StressTest configuration
         'ST': {
             'concurrency' : 8, # How many threads are interferring with the running processes
-            'attempts' :  60, # How many interferring attempts each threads does
+            'attempts' :  20, # How many interferring attempts each threads does
             'attemptsDistribution' : { # Probability with which an interferring thread will
                 'STOP': 0.48,          # select an interferring action (make sure they add up to 1)
                 'CONT': 0.48,
-                'TERM': 0.02
+                'TERM': 0.04
             }
         }
     }

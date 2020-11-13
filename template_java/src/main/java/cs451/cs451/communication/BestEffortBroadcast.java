@@ -32,8 +32,10 @@ public class BestEffortBroadcast {
         BEBMessage msg = new BEBMessage(this.getNextSeqNum(), thisHostId, payload);
 
         if(fromFifo) {
+            // log the broadcast if this method was invoked by FIFO (i.e. this is not a URB relay)
             logger.logBroadcast(payload.getPayload().getSeqNum());
         }
+        // send to all hosts
         for(Host host : hosts) {
             if(host.getId() != thisHostId) {
                 pl.send(msg, host.getId());
@@ -50,6 +52,7 @@ public class BestEffortBroadcast {
         urb.bebDeliver(msg.getPayload());
     }
 
+    // get next sequence number and increment
     private long getNextSeqNum() {
         long seqNum = nextSeqNum;
         nextSeqNum++;

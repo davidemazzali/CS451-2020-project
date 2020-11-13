@@ -15,9 +15,7 @@ import java.util.Collections;
 import java.util.Scanner;
 
 public class Main {
-    // MSGS_PER_ROUND messages can be broadcast,
-    // but before broadcasting others, the process has to deliver all the messages it has broadcast so far
-    // (see below in main function)
+    // limit on the difference between the number of messages broadcast but not delivered yet
     public static final int MSGS_PER_ROUND = 100;
 
     private static void handleSignal(Logger logger) {
@@ -50,22 +48,6 @@ public class Main {
         Parser parser = new Parser(args);
         parser.parse();
         int id = parser.myId();
-
-        // example
-        long pid = ProcessHandle.current().pid();
-        //System.out.println("My PID is " + pid + ".");
-        //System.out.println("Use 'kill -SIGINT " + pid + " ' or 'kill -SIGTERM " + pid + " ' to stop processing packets.");
-
-        //System.out.println("My id is " + id + ".");
-        //System.out.println("List of hosts is:");
-        //for (Host host: parser.hosts()) {
-            //System.out.println(host.getId() + ", " + host.getIp() + ", " + host.getPort());
-        //}
-
-        //System.out.println("Barrier: " + parser.barrierIp() + ":" + parser.barrierPort());
-        //System.out.println("Signal: " + parser.signalIp() + ":" + parser.signalPort());
-        //System.out.println("Output: " + parser.output());
-        // if config is defined; always check before parser.config()
 
         // default number of messages in case no config is provided
         long numMsg = 10;
@@ -113,22 +95,6 @@ public class Main {
                     logger.wait();
                 }
             }
-            /*
-            if((i+1) % MSGS_PER_ROUND == 0) { // if the current round has ended
-                // get from logger how many of the messages broadcast by this process it has also delivered
-                long tempOwnDel = logger.accessOwnDeliveredMsgs(Logger.GET);
-                // get from logger the number of broadcast messages
-                long tempNumBroad = logger.accessBroadcastMsgs(Logger.GET);
-
-                // if this process has not delivered yet some of the messages it has broadcast
-                if(tempOwnDel < tempNumBroad) {
-                    synchronized (logger) {
-                        // then wait for the logger to tell when the remaining ones are delivered
-                        logger.wait();
-                    }
-                }
-            }
-            */
         }
         
         //System.out.println("(" + thisHost.getId() + ") Signaling end of broadcasting messages");

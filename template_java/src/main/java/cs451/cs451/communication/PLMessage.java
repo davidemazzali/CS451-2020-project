@@ -46,20 +46,8 @@ public class PLMessage implements Serializable{
         return seqNumToAck;
     }
 
+    // convert from PLMessage to byte array
     public static byte [] getUdpPayloadFromPLMessage(PLMessage msg) {
-        /*
-        byte [] bytesPacket = null;
-        try {
-            ByteArrayOutputStream out = new ByteArrayOutputStream();
-            ObjectOutputStream os = new ObjectOutputStream(out);
-            os.writeObject(msg);
-            bytesPacket = out.toByteArray();
-        } catch (IOException e) {
-            System.err.println("Error serializing PL packet: " + e.getMessage());
-        }
-
-        return bytesPacket;
-        */
 
         ByteBuffer tempBuffer = ByteBuffer.allocate(60);
         tempBuffer.putLong(0, msg.seqNum);
@@ -81,19 +69,8 @@ public class PLMessage implements Serializable{
         return tempBuffer.array();
     }
 
+    // convert from byte array to PLMessage
     public static synchronized PLMessage getPLMessageFromUdpPayload(byte [] udpPayload) {
-        /*
-        PLMessage msg = null;
-        try {
-            ByteArrayInputStream in = new ByteArrayInputStream(udpPayload);
-            ObjectInputStream is = new ObjectInputStream(in);
-            msg = (PLMessage) is.readObject();
-        } catch (IOException | ClassNotFoundException e) {
-            e.printStackTrace();
-            System.err.println("Error deserializing PL packet: " + e.getMessage());
-        }
-        return msg;
-        */
 
         PLMessage msg = null;
 

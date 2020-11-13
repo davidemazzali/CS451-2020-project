@@ -11,7 +11,11 @@ public class FIFOBroadcast {
 
     private long nextSeqNum;
     private int thisHostId;
-    private HashMap<Integer, HashMap<Long, FIFOMessage>> pending;
+
+    // first key is host id, second key is the seq. number of the message
+    private HashMap<Integer, HashMap<Long, FIFOMessage>> pending; // store the messages this process is waiting to deliver that were originally broadcast by each member of the network
+
+    // next seq. number to deliver for each network member (index is ID - 1)
     private long [] next;
 
     private Logger logger;
@@ -33,7 +37,6 @@ public class FIFOBroadcast {
 
     public void broadcast() {
         FIFOMessage msg = new FIFOMessage(this.getNextSeqNum(), thisHostId);
-        //logger.logBroadcast(msg.getSeqNum());
         urb.broadcast(msg);
     }
 
@@ -43,8 +46,10 @@ public class FIFOBroadcast {
         }
 
         if(msg.getSeqNum() >= next[msg.getIdBroadcaster()-1]) {
+            // put this message into pending
             pending.get(msg.getIdBroadcaster()).put(msg.getSeqNum(), msg);
 
+            // as long as there are messages that can be delivered, deliver them and remove them from pending
             FIFOMessage msgToDeliver = this.canDeliver(msg.getIdBroadcaster());
             while (msgToDeliver != null) {
                 next[msg.getIdBroadcaster() - 1]++;
@@ -60,6 +65,7 @@ public class FIFOBroadcast {
         logger.logDeliver(msg.getIdBroadcaster(), msg.getSeqNum());
     }
 
+    // return a message that can be delivered if any, null otherwise
     private FIFOMessage canDeliver(int idBroadcaster) {
         for(long seqNum : pending.get(idBroadcaster).keySet()) {
             if(seqNum == next[idBroadcaster-1]) {
@@ -70,6 +76,7 @@ public class FIFOBroadcast {
         return null;
     }
 
+    // get next sequence number and increment
     private long getNextSeqNum() {
         long seqNum = nextSeqNum;
         nextSeqNum++;

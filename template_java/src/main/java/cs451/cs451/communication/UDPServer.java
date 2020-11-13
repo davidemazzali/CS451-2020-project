@@ -24,6 +24,7 @@ public class UDPServer extends Thread {
     }
 
     public void run() {
+        // listen on socket and deliver packets to perfect link
         while (true) {
             byte[] inputBuffer = new byte[Constants.BUFFER_SIZE];
 
@@ -31,7 +32,6 @@ public class UDPServer extends Thread {
 
             try {
                 serverSocket.receive(inputPacket);
-                //long recTime = System.currentTimeMillis();
 
                 byte[] payload = inputPacket.getData();
 
@@ -46,14 +46,10 @@ public class UDPServer extends Thread {
     }
 
     public synchronized void sendDatagram(byte [] payload, InetAddress recipientIp, int recipientPort, long recTime) {
+        // send datagram
         DatagramPacket packet = new DatagramPacket(payload, payload.length, recipientIp, recipientPort);
         try {
             serverSocket.send(packet);
-            /*
-            if(recTime != -1) {
-                System.out.println("IT TOOK " + (System.currentTimeMillis()-recTime) + " TO SEND ACK (" + pl.thisHostId + ")");
-            }
-            */
         } catch (IOException e) {
             System.err.println("Error sending datagram: " + e.getMessage());
         }
