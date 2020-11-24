@@ -51,9 +51,12 @@ public class Main {
 
         // default number of messages in case no config is provided
         long numMsg = 10;
+        ArrayList<Integer> depending = new ArrayList<>();
         if (parser.hasConfig()) {
             //System.out.println("Config: " + parser.config());
-            numMsg = readNumMsg(parser.config()); // read the number of messages to broadcast
+            LongArrayPair params = readNumMsg(parser.config(), id); // read the number of messages to broadcast
+            numMsg = params.numMsg;
+            depending = params.depending;
         }
 
         Coordinator coordinator = new Coordinator(parser.myId(), parser.barrierIp(), parser.barrierPort(), parser.signalIp(), parser.signalPort());
@@ -69,7 +72,7 @@ public class Main {
         Logger logger = new Logger(parser.output(), hosts.getHosts().size(), numMsg, thisHost.getId());
 
         // instantiate the FIFO broadcast layer
-        FIFOBroadcast fifo = new FIFOBroadcast(thisHost.getId(), thisHost.getPort(), (ArrayList)parser.hosts(), logger);
+        TopLevelBroadcast fifo = new LocalizedCausalBroadcast(thisHost.getId(), thisHost.getPort(), (ArrayList)parser.hosts(), depending, logger);
 
         Main.initSignalHandlers(logger);
 
@@ -107,7 +110,7 @@ public class Main {
         }
     }
 
-    private static long readNumMsg(String path) {
+    private static LongArrayPair readNumMsg(String path, int thisHostId) {
         // read the number of messages to broadcast
 
         long numMsg = 0;
@@ -117,13 +120,37 @@ public class Main {
             sc = new Scanner(file);
 
             if(sc.hasNext()) {
-                numMsg = sc.nextInt();
+                numMsg = Integer.parseInt(sc.nextLine());
+                System.out.println(numMsg);
             }
 
-            return  numMsg;
+            String line = sc.nextLine();
+            String [] tokens = line.split(" ");
+            while(Integer.parseInt(tokens[0]) != thisHostId) {
+                line = sc.nextLine();
+                tokens = line.split(" ");
+            }
+
+            ArrayList<Integer> depending = new ArrayList<>();
+            for(int i = 1; i < tokens.length; i++) {
+                depending.add(Integer.parseInt(tokens[i]));
+            }
+
+            sc.close();
+
+            LongArrayPair ret = new LongArrayPair();
+            ret.numMsg = numMsg;
+            ret.depending = depending;
+
+            return  ret;
         } catch (FileNotFoundException e) {
             System.err.println("Error opening config file: " + e.getMessage());
         }
-        return numMsg;
+        return null;
+    }
+
+    private static class LongArrayPair {
+        public long numMsg;
+        public ArrayList<Integer> depending;
     }
 }

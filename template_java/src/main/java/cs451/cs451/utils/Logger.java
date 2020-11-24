@@ -92,11 +92,10 @@ public class Logger {
 
             logSem.release();
 
-            /*
+
             if(tempNumDel % 100 == 0) {
                 System.out.println("(" + thisHostId + ") " + tempNumDel);
             }
-            */
 
             // get number of broadcast messages
             long tempNumBroad = accessBroadcastMsgs(GET);

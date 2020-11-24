@@ -5,9 +5,9 @@ import java.io.Serializable;
 public class URBMessage implements Serializable {
     private long seqNum;
     private int idBroadcaster;
-    private FIFOMessage payload;
+    private TopLevelMessage payload;
 
-    public URBMessage(long seqNum, int idBroadcaster, FIFOMessage payload) {
+    public URBMessage(long seqNum, int idBroadcaster, TopLevelMessage payload) {
         this.seqNum = seqNum;
         this.idBroadcaster = idBroadcaster;
         this.payload = payload;
@@ -21,7 +21,7 @@ public class URBMessage implements Serializable {
         return idBroadcaster;
     }
 
-    public FIFOMessage getPayload() {
+    public TopLevelMessage getPayload() {
         return payload;
     }
 }

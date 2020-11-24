@@ -29,5 +29,5 @@ public class Constants {
     public static final int CONFIG_VALUE = 10;
 
     // size of UDP buffer
-    public static final int BUFFER_SIZE = 60;
+    public static final int BUFFER_SIZE = 60+4+4+1536;
 }

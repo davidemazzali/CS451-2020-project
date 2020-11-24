@@ -249,14 +249,83 @@ class FifoBroadcastValidation(Validation):
         return True, delivered, broadcast
 
 class LCausalBroadcastValidation(Validation):
-    def __init__(self, processes, outputDir, causalRelationships):
-        super().__init__(processes, outputDir)
+    def __init__(self, processes, messages, outputDir, extraParameter):
+        super().__init__(processes, messages, outputDir)
 
     def generateConfig(self):
-        raise NotImplementedError()
+        hosts = tempfile.NamedTemporaryFile(mode='w')
+        config = tempfile.NamedTemporaryFile(mode='w')
+
+        for i in range(1, self.processes + 1):
+            hosts.write("{} localhost {}\n".format(i, PROCESSES_BASE_IP+i))
+
+        hosts.flush()
+
+        config.write("{}\n".format(self.messages))
+        proc_list = list(range(1, self.processes+1))
+        random.shuffle(proc_list)
+        for i in proc_list:
+            config.write("{} ".format(i))
+
+            
+            num_dep = random.randint(0, self.processes-1)
+            temp = set(range(1, self.processes+1))
+            temp.remove(i)
+            deps = random.sample(temp, num_dep)
+
+            for j in deps:
+                config.write("{} ".format(j))
+            config.write("\n")
+        
+        config.flush()
+
+        return (hosts, config)
 
     def checkProcess(self, pid):
-        raise NotImplementedError()
+        filePath = os.path.join(self.outputDirPath, 'proc{:02d}.output'.format(pid))
+
+        i = 1
+        nextMessage = defaultdict(lambda : 1)
+        filename = os.path.basename(filePath)
+
+        broadcast = set()
+        delivered = set()
+        with open(filePath) as f:
+            for lineNumber, line in enumerate(f):
+                tokens = line.split()
+
+                # Check broadcast
+                if tokens[0] == 'b':
+                    msg = int(tokens[1])
+
+                    broadcast.add((pid, msg))
+
+                    if msg != i:
+                        print("File {}, Line {}: Messages broadcast out of order. Expected message {} but broadcast message {}".format(filename, lineNumber, i, msg))
+                        return False, None
+                    i += 1
+
+                # Check delivery
+                if tokens[0] == 'd':
+                    sender = int(tokens[1])
+                    msg = int(tokens[2])
+
+                    if sender == pid:
+                        if (pid, msg) not in broadcast:
+                            print(pid, "has delivered ", msg, " before broadcasting it")
+                            return False, None, None
+                    if (sender, msg) in delivered:
+                        print(pid, "has delivered ", (sender, msg), "at least twice")
+                        return False, None, None
+                    else:
+                        delivered.add((sender, msg))
+                        
+                        if msg != nextMessage[sender]:
+                            print("File {}, Line {}: Message delivered out of order. Expected message {}, but delivered message {}".format(filename, lineNumber, nextMessage[sender], msg))
+                            return False, None, None
+                        else:
+                            nextMessage[sender] = msg + 1
+        return True, delivered, broadcast
 
 class StressTest:
     def __init__(self, procs, concurrency, attempts, attemptsRatio):
@@ -352,6 +421,7 @@ class StressTest:
             self.stress()
 
 def startProcesses(processes, runscript, hostsFilePath, configFilePath, outputDir):
+    print('aaaaaaaaaaaa', configFilePath)
     runscriptPath = os.path.abspath(runscript)
     if not os.path.isfile(runscriptPath):
         raise Exception("`{}` is not a file".format(runscriptPath))
@@ -393,8 +463,8 @@ def startProcesses(processes, runscript, hostsFilePath, configFilePath, outputDi
 
 def main(processes, messages, runscript, broadcastType, logsDir, testConfig):
     # Set tc for loopback
-    tc = TC(testConfig['TC'])
-    print(tc)
+    #tc = TC(testConfig['TC'])
+    #print(tc)
 
     # Start the barrier
     initBarrier = barrier.Barrier(BARRIER_IP, BARRIER_PORT, processes)
@@ -553,8 +623,8 @@ if __name__ == "__main__":
 
         # StressTest configuration
         'ST': {
-            'concurrency' : 8, # How many threads are interferring with the running processes
-            'attempts' :  20, # How many interferring attempts each threads does
+            'concurrency' : 0,#8, # How many threads are interferring with the running processes
+            'attempts' :  0,#20, # How many interferring attempts each threads does
             'attemptsDistribution' : { # Probability with which an interferring thread will
                 'STOP': 0.48,          # select an interferring action (make sure they add up to 1)
                 'CONT': 0.48,

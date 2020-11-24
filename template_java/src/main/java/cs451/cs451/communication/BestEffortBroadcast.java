@@ -12,6 +12,8 @@ public class BestEffortBroadcast {
     private long nextSeqNum;
     private int thisHostId;
     private ArrayList<Host> hosts;
+    private ArrayList<Host> neighbours;
+
 
     private Logger logger;
 
@@ -21,6 +23,11 @@ public class BestEffortBroadcast {
 
         this.hosts = new ArrayList<>();
         this.hosts = hosts;
+
+        neighbours = new ArrayList<>();
+        for(int i = 1; i <= hosts.size()/2+1; i++) {
+            neighbours.add(hosts.get(((thisHostId-1)+i) % hosts.size()));
+        }
 
         this.logger = logger;
 
@@ -36,12 +43,20 @@ public class BestEffortBroadcast {
             logger.logBroadcast(payload.getPayload().getSeqNum());
         }
         // send to all hosts
+
+        /*
         for(Host host : hosts) {
             if(host.getId() != thisHostId) {
                 pl.send(msg, host.getId());
             }
         }
         pl.send(msg, thisHostId);
+        */
+
+        for(Host host : neighbours) {
+            pl.send(msg, host.getId());
+        }
+
     }
 
     public synchronized void plDeliver(BEBMessage msg) {

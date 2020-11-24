@@ -3,14 +3,13 @@ package cs451.communication;
 import cs451.utils.Host;
 import cs451.utils.Logger;
 
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
 public class UniformReliableBroadcast {
     private BestEffortBroadcast beb;
-    private FIFOBroadcast fifo;
+    private TopLevelBroadcast topLevel;
 
     private long nextSeqNum;
     private int thisHostId;
@@ -27,7 +26,7 @@ public class UniformReliableBroadcast {
     private static final int PUT = 1;
     private static final int REMOVE = 2;
 
-    public UniformReliableBroadcast(int thisHostId, int port, ArrayList<Host> hosts, FIFOBroadcast fifo, Logger logger) {
+    public UniformReliableBroadcast(int thisHostId, int port, ArrayList<Host> hosts, TopLevelBroadcast topLevel, Logger logger) {
         nextSeqNum = 0;
         this.thisHostId = thisHostId;
         this.numHosts = hosts.size();
@@ -37,11 +36,11 @@ public class UniformReliableBroadcast {
 
         this.logger = logger;
 
-        this.fifo = fifo;
+        this.topLevel = topLevel;
         beb =  new BestEffortBroadcast(thisHostId, port, hosts, this, logger);
     }
 
-    public void broadcast(FIFOMessage payload) {
+    public void broadcast(TopLevelMessage payload) {
         URBMessage msg = new URBMessage(this.getNextSeqNum(), thisHostId, payload);
 
         // mark message as pending and send it with BEB
@@ -107,7 +106,7 @@ public class UniformReliableBroadcast {
         delivered.get(msg.getIdBroadcaster()).put(msg.getSeqNum(), msg);
 
 
-        fifo.urbDeliver(msg.getPayload());
+        topLevel.urbDeliver(msg.getPayload());
     }
 
     // thread-safe method to get all pending messages, or put a new one, or remove one

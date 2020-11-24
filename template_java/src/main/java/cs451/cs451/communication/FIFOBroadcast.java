@@ -6,7 +6,7 @@ import cs451.utils.Logger;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-public class FIFOBroadcast {
+public class FIFOBroadcast implements TopLevelBroadcast{
     private UniformReliableBroadcast urb;
 
     private long nextSeqNum;
@@ -40,7 +40,8 @@ public class FIFOBroadcast {
         urb.broadcast(msg);
     }
 
-    public synchronized void urbDeliver(FIFOMessage msg) {
+    public synchronized void urbDeliver(TopLevelMessage tlMsg) {
+        FIFOMessage msg = (FIFOMessage)tlMsg;
         if(!pending.containsKey(msg.getIdBroadcaster())) {
             pending.put(msg.getIdBroadcaster(), new HashMap<>());
         }

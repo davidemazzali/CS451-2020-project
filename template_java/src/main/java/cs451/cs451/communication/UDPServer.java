@@ -48,6 +48,7 @@ public class UDPServer extends Thread {
     public synchronized void sendDatagram(byte [] payload, InetAddress recipientIp, int recipientPort, long recTime) {
         // send datagram
         DatagramPacket packet = new DatagramPacket(payload, payload.length, recipientIp, recipientPort);
+        //System.out.println("("+pl.thisHostId+") sending");
         try {
             serverSocket.send(packet);
         } catch (IOException e) {

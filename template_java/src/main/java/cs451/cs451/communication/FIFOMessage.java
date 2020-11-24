@@ -2,7 +2,7 @@ package cs451.communication;
 
 import java.io.Serializable;
 
-public class FIFOMessage implements Serializable {
+public class FIFOMessage implements Serializable, TopLevelMessage {
     private long seqNum;
     private int idBroadcaster;
 

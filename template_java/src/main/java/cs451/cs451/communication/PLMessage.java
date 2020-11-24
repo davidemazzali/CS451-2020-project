@@ -1,7 +1,11 @@
 package cs451.communication;
 
+import cs451.utils.Constants;
+
 import java.io.*;
 import java.nio.ByteBuffer;
+import java.util.HashMap;
+import java.util.Map;
 
 public class PLMessage implements Serializable{
     private long seqNum;
@@ -48,8 +52,14 @@ public class PLMessage implements Serializable{
 
     // convert from PLMessage to byte array
     public static byte [] getUdpPayloadFromPLMessage(PLMessage msg) {
-
-        ByteBuffer tempBuffer = ByteBuffer.allocate(60);
+        int length = 60+4;
+        if(msg.payload != null) {
+            if(msg.getPayload().getPayload().getPayload() instanceof LCMessage) {
+                length += 4;
+                length += (4+8)*((LCMessage) msg.getPayload().getPayload().getPayload()).getClocks().size();
+            }
+        }
+        ByteBuffer tempBuffer = ByteBuffer.allocate(length);
         tempBuffer.putLong(0, msg.seqNum);
         tempBuffer.putInt(8, msg.idRecipient);
         tempBuffer.putInt(12, msg.idSender);
@@ -61,6 +71,20 @@ public class PLMessage implements Serializable{
             tempBuffer.putInt(44, msg.getPayload().getPayload().getIdBroadcaster());
             tempBuffer.putLong(48, msg.getPayload().getPayload().getPayload().getSeqNum());
             tempBuffer.putInt(56, msg.getPayload().getPayload().getPayload().getIdBroadcaster());
+            if(msg.getPayload().getPayload().getPayload() instanceof LCMessage) {
+                tempBuffer.putInt(60, 1);
+                HashMap<Integer, Long> clocks = ((LCMessage) msg.getPayload().getPayload().getPayload()).getClocks();
+                tempBuffer.putInt(64, clocks.size());
+                int i = 0;
+                for(Map.Entry<Integer, Long> entry : clocks.entrySet()) {
+                    tempBuffer.putInt(68 + i*(4+8), entry.getKey());
+                    tempBuffer.putLong(68 + i*(4+8) + 4, entry.getValue());
+                    i++;
+                }
+            }
+            else {
+                //tempBuffer.putInt(60, 2);
+            }
         }
         else {
             tempBuffer.putLong(24, -1);
@@ -74,7 +98,7 @@ public class PLMessage implements Serializable{
 
         PLMessage msg = null;
 
-        ByteBuffer tempBuffer = ByteBuffer.allocate(60);
+        ByteBuffer tempBuffer = ByteBuffer.allocate(Constants.BUFFER_SIZE);
         tempBuffer.put(udpPayload);
 
         long plSeqNum =tempBuffer.getLong(0);
@@ -86,16 +110,34 @@ public class PLMessage implements Serializable{
             int bebSender = tempBuffer.getInt(32);
             long urbSeqNum = tempBuffer.getLong(36);
             int urbBroad = tempBuffer.getInt(44);
-            long fifoSeqNum = tempBuffer.getLong(48);
-            int fifoBroad = tempBuffer.getInt(56);
+            long tlSeqNum = tempBuffer.getLong(48);
+            int tlBroad = tempBuffer.getInt(56);
+            int typeTl = tempBuffer.getInt(60);
 
-            msg = new PLMessage(plSeqNum, plSend, plRec,
-                    new BEBMessage(bebSeqNum, bebSender,
-                            new URBMessage(urbSeqNum, urbBroad,
-                                    new FIFOMessage(fifoSeqNum, fifoBroad)
-                                    )
-                            )
-                    );
+            if(typeTl == 1) {
+                HashMap<Integer, Long> clocks = new HashMap<>();
+                int numEntries = tempBuffer.getInt(64);
+                for(int i = 0; i < numEntries; i++) {
+                    clocks.put(tempBuffer.getInt(68 + i*(4+8)), tempBuffer.getLong(68 + i*(4+8)+4));
+                }
+
+                msg = new PLMessage(plSeqNum, plSend, plRec,
+                        new BEBMessage(bebSeqNum, bebSender,
+                                new URBMessage(urbSeqNum, urbBroad,
+                                        new LCMessage(tlSeqNum, tlBroad, clocks)
+                                )
+                        )
+                );
+            }
+            else {
+                msg = new PLMessage(plSeqNum, plSend, plRec,
+                        new BEBMessage(bebSeqNum, bebSender,
+                                new URBMessage(urbSeqNum, urbBroad,
+                                        new FIFOMessage(tlSeqNum, tlBroad)
+                                )
+                        )
+                );
+            }
         }
         else {
             msg = new PLMessage(plSeqNum, plSend, plRec, plSeqAck);
