@@ -39,7 +39,6 @@ public class PerfectLinks {
 
         this.beb = beb;
         this.udpServer = new UDPServer(port, this);
-        udpServer.start();
 
         this.retransmitThread = new Retransmit();
         retransmitThread.start();
@@ -81,17 +80,26 @@ public class PerfectLinks {
     }
 
     private void deliver(PLMessage msg) {
+        //System.out.println("("+thisHostId+") PL delivering");
         beb.plDeliver(msg.getPayload());
     }
 
     private class Retransmit extends Thread {
         public void run() {
-            while (true) {
+            String alive;
+            while (true) {/*
+                if(udpServer.isInterrupted()) {
+                    alive = "IS alive";
+                }
+                else {
+                    alive = "IS NOT alive";
+                }
+                System.out.println("("+thisHostId+") udp server "  + alive );*/
                 long nextTimeout = Long.MAX_VALUE; // stores how soon will a timeout expire, determines how long this thread sleeps at the end of loop
 
                 // get messages waiting to be ACKed
                 ArrayList<PLMessageTransmit> pending = (ArrayList<PLMessageTransmit>)accessRecipients(GET_PENDING, -1, -1, null);
-
+                //printPending(pending);
                 if(pending.size() == 0) {
                     nextTimeout = NO_PENDING_SLEEP;
                 }
@@ -104,12 +112,14 @@ public class PerfectLinks {
                         long now = System.currentTimeMillis();
                         if (now - lastRet > msgRet.getRecipientTimeout()) { // if the timeout associated to this message' sender is expired
                             udpServer.sendDatagram(PLMessage.getUdpPayloadFromPLMessage(msgRet.getMsg()), HostsParser.getHostById(msgRet.getMsg().getIdRecipient()).getIpInet(), HostsParser.getHostById(msgRet.getMsg().getIdRecipient()).getPort(), -1);
-
+                            //System.out.println("("+thisHostId+") re-transmitting to "+HostsParser.getHostById(msgRet.getMsg().getIdRecipient()).getIpInet() +" "+ HostsParser.getHostById(msgRet.getMsg().getIdRecipient()).getPort());
                             // update the retransmission time
                             long retTime = System.currentTimeMillis();
                             msgRet.accessLastRetransmit(PLMessageTransmit.SET, retTime);
 
                             nextTimeout = Math.min(nextTimeout, msgRet.getRecipientTimeout());
+
+                            //accessRecipients(TO_EXPIRED, msgRet.getMsg().getIdRecipient(),  -1, null);
                         } else {
                             nextTimeout = Math.min(nextTimeout, msgRet.getRecipientTimeout() - (now - lastRet));
                         }
@@ -117,7 +127,7 @@ public class PerfectLinks {
                 }
 
                 try {
-                    Thread.sleep((long)(nextTimeout));
+                    Thread.sleep((long)(1000));
                 } catch (InterruptedException e) {
                     System.err.println("Sleep interrupted: " + e.getMessage());
                 }
@@ -228,6 +238,22 @@ public class PerfectLinks {
         }
     }
 
+    private void printPending(ArrayList<PLMessageTransmit> old) {
+        HashMap<Integer, Long> num = new HashMap<>();
+        for(PLMessageTransmit msg : old) {
+            if(!num.containsKey(msg.getMsg().getIdRecipient())) {
+                num.put(msg.getMsg().getIdRecipient(), 0L);
+            }
+            num.put(msg.getMsg().getIdRecipient(), num.get(msg.getMsg().getIdRecipient())+1);
+        }
+
+        System.out.print("("+thisHostId+")  ");
+        for(Map.Entry<Integer, Long> e: num.entrySet()) {
+            System.out.print("p:"+e.getKey() + "-"+e.getValue()+"  ");
+        }
+        System.out.println();
+    }
+
     private class PLMessageTransmit { // store info about sent message waiting to be acked
         private final PLMessage msg;
         private long lastRetransmit;
@@ -331,7 +357,7 @@ public class PerfectLinks {
                     else {
                         if(notRetransmitted < 0) {
                             notRetransmitted--;
-                            if(Math.abs(notRetransmitted) - 1 >= maxWindowSize) {
+                            if(Math.abs(notRetransmitted) >= maxWindowSize) {
                                 resizeWindow();
                             }
                         }

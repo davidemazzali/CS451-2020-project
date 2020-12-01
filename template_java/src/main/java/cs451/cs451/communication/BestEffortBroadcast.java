@@ -44,18 +44,18 @@ public class BestEffortBroadcast {
         }
         // send to all hosts
 
-        /*
         for(Host host : hosts) {
             if(host.getId() != thisHostId) {
                 pl.send(msg, host.getId());
             }
         }
         pl.send(msg, thisHostId);
-        */
 
+        /*
         for(Host host : neighbours) {
             pl.send(msg, host.getId());
         }
+        */
 
     }
 

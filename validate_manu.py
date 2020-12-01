@@ -17,7 +17,8 @@ from enum import Enum
 
 from collections import defaultdict, OrderedDict
 
-import copy
+from generate_memb_ste import generate_memb_ste, create_memb_from_dict
+
 
 BARRIER_IP = 'localhost'
 BARRIER_PORT = 10000
@@ -145,77 +146,17 @@ class Validation:
         # Implement on the derived classes
         pass
 
-    def checkAll(self, unterminated, dependencies, continueOnError=True):
+    def checkAll(self, continueOnError=True):
         ok = True
-        delivered = {}
-        log = {}
-        broadcast = {}
         for pid in range(1, self.processes+1):
-            ret, delivered[pid], log[pid], broadcast[pid] = self.checkProcess(pid)
+            ret = self.checkProcess(pid)
             if not ret:
                 ok = False
 
             if not ret and not continueOnError:
                 return False
 
-        correct = unterminated
-
-        #print(correct)
-        #print(delivered)
-        #print(broadcast)
-
-        for pid in range(1, self.processes+1):
-            for m in delivered[pid]:
-                for corr in correct:
-                    if m not in delivered[corr]:
-                        ok = False
-                        print("UNIFORMITY", m, pid, "(" + ("correct" if pid in correct else "NOT correct") + ")", corr)
-        
-        for p in correct:
-            for q in correct:
-                for m in broadcast[p]:
-                    if m not in delivered[q]:
-                        ok = False
-                        print("VALIDITY", p, m, " not delivered by" , q)
-
-        for pid in range(1, self.processes+1):
-            for (s, msg) in delivered[pid]:
-                if (s, msg) not in broadcast[s]:
-                    ok = False
-                    print( "INTEGRITY", pid, "delivered" , (s, msg)," not broadcast by ", s)
-        
-
-        clocks = {}
-        for pid in range(1, self.processes+1):
-            clocks[pid] = {}
-            clk = {q : 0 for q in dependencies[pid]}
-            for event in log[pid]:
-                if event[0] == 'd':
-                    if event[1] in clk:
-                        clk[event[1]] += 1
-                elif event[0] == 'b':
-                    clocks[pid][event[2]] = copy.deepcopy(clk)
-        
-        for pid in range(1, self.processes+1):
-            clk = {q : 0 for q in range(1, self.processes+1)}
-            for event in log[pid]:
-                if event[0] == 'd':
-                    if not check_clocks(clk, clocks[event[1]][event[2]]):
-                        ok = False
-                        print("CAUSAL DELIVERY")
-                    clk[event[1]] += 1
-
-        for pid in range(1, self.processes+1):
-            print('Process', pid, ' delivered', len(delivered[pid]), ' messages')
-
         return ok
-
-def check_clocks(target, other):
-    ret = True
-    for q in other:
-        if other[q] > target[q]:
-            ret = False
-    return ret
 
 class FifoBroadcastValidation(Validation):
     def generateConfig(self):
@@ -239,8 +180,6 @@ class FifoBroadcastValidation(Validation):
         nextMessage = defaultdict(lambda : 1)
         filename = os.path.basename(filePath)
 
-        broadcast = set()
-        delivered = set()
         with open(filePath) as f:
             for lineNumber, line in enumerate(f):
                 tokens = line.split()
@@ -248,119 +187,83 @@ class FifoBroadcastValidation(Validation):
                 # Check broadcast
                 if tokens[0] == 'b':
                     msg = int(tokens[1])
-
-                    broadcast.add((pid, msg))
-
                     if msg != i:
                         print("File {}, Line {}: Messages broadcast out of order. Expected message {} but broadcast message {}".format(filename, lineNumber, i, msg))
-                        return False, None
+                        return False
                     i += 1
 
                 # Check delivery
                 if tokens[0] == 'd':
                     sender = int(tokens[1])
                     msg = int(tokens[2])
-
-                    if sender == pid:
-                        if (pid, msg) not in broadcast:
-                            print(pid, "has delivered ", msg, " before broadcasting it")
-                            return False, None, None
-                    if (sender, msg) in delivered:
-                        print(pid, "has delivered ", (sender, msg), "at least twice")
-                        return False, None, None
+                    if msg != nextMessage[sender]:
+                        print("File {}, Line {}: Message delivered out of order. Expected message {}, but delivered message {}".format(filename, lineNumber, nextMessage[sender], msg))
+                        return False
                     else:
-                        delivered.add((sender, msg))
-                        
-                        if msg != nextMessage[sender]:
-                            print("File {}, Line {}: Message delivered out of order. Expected message {}, but delivered message {}".format(filename, lineNumber, nextMessage[sender], msg))
-                            return False, None, None
-                        else:
-                            nextMessage[sender] = msg + 1
-        return True, delivered, broadcast
+                        nextMessage[sender] = msg + 1
+
+        return True
 
 class LCausalBroadcastValidation(Validation):
-    def __init__(self, processes, messages, outputDir, extraParameter):
+    def __init__(self, processes, messages, outputDir, causalRelationships, otherCausal, maxCausal):
         super().__init__(processes, messages, outputDir)
+        self.causalRelationships = causalRelationships
+        self.otherCausal = otherCausal
+        self.maxCausal = maxCausal
+        self.causalMessages = {}
 
     def generateConfig(self):
         hosts = tempfile.NamedTemporaryFile(mode='w')
-
         with open('settings.conf', 'w') as config:
-
-            dependencies = {}
 
             for i in range(1, self.processes + 1):
                 hosts.write("{} localhost {}\n".format(i, PROCESSES_BASE_IP+i))
-                #print("{} localhost {}\n".format(i, PROCESSES_BASE_IP+i))
-
             hosts.flush()
+            ste = True
+
+            if (self.otherCausal == False):
+                generateNewCausal = True
+                self.causalRelationships = {}
+            else:
+                generateNewCausal = False
+                if ste:
+                    self.causalRelationships = generate_memb_ste(self.processes, self.maxCausal)
 
             config.write("{}\n".format(self.messages))
-            proc_list = list(range(1, self.processes+1))
-            random.shuffle(proc_list)
-            for i in proc_list:
-                config.write("{} ".format(i))
-
-                
-                num_dep = random.randint(0, self.processes-1)
-                temp = set(range(1, self.processes+1))
-                temp.remove(i)
-                deps = random.sample(temp, num_dep)
-
-                dependencies[i] = list(deps)
-
-                for j in deps:
-                    config.write("{} ".format(j))
-                config.write("\n")
-            
+            for i in range(1, self.processes + 1):
+                if generateNewCausal:
+                    poss_casual = [j for j in range(1, self.processes + 1) if j!=i]
+                    numCausal = random.randint(0, self.maxCausal)
+                    causal = random.sample(poss_casual, numCausal)
+                    config.write("{}".format(i))
+                    for c in causal:
+                        config.write(" {}".format(c))
+                    config.write("\n")
+                    self.causalRelationships[i] = causal
+                else:
+                    config.write("{}".format(i))
+                    for c in self.causalRelationships[i]:
+                        config.write(" {}".format(c))
+                    config.write("\n")
             config.flush()
 
-            return (hosts, config, dependencies)
-
-    def generateConfig2(self):
-        hosts = tempfile.NamedTemporaryFile(mode='w')
-        config = tempfile.NamedTemporaryFile(mode='w')
-
-        dependencies = {}
-
-        for i in range(1, self.processes + 1):
-            hosts.write("{} localhost {}\n".format(i, PROCESSES_BASE_IP+i))
-            #print("{} localhost {}\n".format(i, PROCESSES_BASE_IP+i))
-
-        hosts.flush()
-
-        config.write("{}\n".format(self.messages))
-        proc_list = list(range(1, self.processes+1))
-        random.shuffle(proc_list)
-        for i in proc_list:
-            config.write("{} ".format(i))
-
+            if ste and self.otherCausal == False and generateNewCausal:
+                create_memb_from_dict(self.causalRelationships, self.processes)
             
-            num_dep = random.randint(0, self.processes-1)
-            temp = set(range(1, self.processes+1))
-            temp.remove(i)
-            deps = random.sample(temp, num_dep)
+            return (hosts, config)
 
-            dependencies[i] = list(deps)
-
-            for j in deps:
-                config.write("{} ".format(j))
-            config.write("\n")
-        
-        config.flush()
-
-        return (hosts, config, dependencies)
-
-    def checkProcess(self, pid):
+    def checkFIFO(self, pid):
         filePath = os.path.join(self.outputDirPath, 'proc{:02d}.output'.format(pid))
 
         i = 1
         nextMessage = defaultdict(lambda : 1)
         filename = os.path.basename(filePath)
-
-        broadcast = set()
-        delivered = set()
-        log = []
+        self.causalMessages[pid] = defaultdict(set)
+        lastDelivery = {}
+        for p in self.causalRelationships[pid]:
+            lastDelivery[p] = None
+        
+        # Check FIFO order and in the meantime save causal relationships
         with open(filePath) as f:
             for lineNumber, line in enumerate(f):
                 tokens = line.split()
@@ -368,38 +271,73 @@ class LCausalBroadcastValidation(Validation):
                 # Check broadcast
                 if tokens[0] == 'b':
                     msg = int(tokens[1])
-
-                    broadcast.add((pid, msg))
-
                     if msg != i:
                         print("File {}, Line {}: Messages broadcast out of order. Expected message {} but broadcast message {}".format(filename, lineNumber, i, msg))
-                        return False, None
+                        return False
                     i += 1
+                    for p in self.causalRelationships[pid]:
+                        if lastDelivery[p]!=None:
+                            self.causalMessages[pid][msg].add("{} {}".format(p, lastDelivery[p]))
 
-                    log.append(('b', pid, msg))
 
                 # Check delivery
                 if tokens[0] == 'd':
                     sender = int(tokens[1])
                     msg = int(tokens[2])
-
-                    if sender == pid:
-                        if (pid, msg) not in broadcast:
-                            print(pid, "has delivered ", msg, " before broadcasting it")
-                            return False, None, None
-                    if (sender, msg) in delivered:
-                        print(pid, "has delivered ", (sender, msg), "at least twice")
-                        return False, None, None
+                    if msg != nextMessage[sender]:
+                        print("File {}, Line {}: Message delivered out of order. Expected message {}, but delivered message {}".format(filename, lineNumber, nextMessage[sender], msg))
+                        return False
                     else:
-                        delivered.add((sender, msg))
+                        nextMessage[sender] = msg + 1
+                    if sender in lastDelivery:
+                        lastDelivery[sender] = msg
 
-                        if msg != nextMessage[sender]:
-                            print("File {}, Line {}: Message delivered out of order. Expected message {}, but delivered message {}".format(filename, lineNumber, nextMessage[sender], msg))
-                            return False, None, None
-                        else:
-                            nextMessage[sender] = msg + 1
-                    log.append(('d', sender, msg))
-        return True, delivered, log, broadcast
+        #print("Process: {} Extracted message relationships: {}".format(pid, self.causalMessages[pid]))
+        return True
+
+    def checkLCausal(self, pid):
+        filePath = os.path.join(self.outputDirPath, 'proc{:02d}.output'.format(pid))
+        filename = os.path.basename(filePath)
+        delivered = set()
+        print("Checking LCausal", pid)
+        with open(filePath) as f:
+            for lineNumber, line in enumerate(f):
+               tokens = line.split()
+               if tokens[0] == 'd':
+                sender = int(tokens[1])
+                msg = int(tokens[2])
+                delivered.add("{} {}".format(sender, msg))
+                if msg in self.causalMessages[sender]:
+                    shouldBeDelivered = self.causalMessages[sender][msg]
+                    #print("Message {} from process {}, should be delivered {}, delivered {}".format(msg, sender, shouldBeDelivered, delivered.intersection(shouldBeDelivered)))
+                    if not delivered.issuperset(shouldBeDelivered):
+                        print("File {}, Line {}: Causal relationship violated. Expected messages {}, but delivered messages {}".format(filename, lineNumber, shouldBeDelivered, delivered.intersection(shouldBeDelivered)))
+                        return False
+        return True
+
+    def checkAll(self, continueOnError=True):
+        ok = True
+        #Check FIFO
+        for pid in range(1, self.processes+1):
+            ret = self.checkFIFO(pid)
+            if not ret:
+                ok = False
+
+            if not ret and not continueOnError:
+                return False
+        
+        # Check LCausal
+        for pid in range(1, self.processes+1):
+            ret = self.checkLCausal(pid)
+            if not ret:
+                ok = False
+
+            if not ret and not continueOnError:
+                return False
+        
+        return ok
+
+
 
 class StressTest:
     def __init__(self, procs, concurrency, attempts, attemptsRatio):
@@ -427,37 +365,31 @@ class StressTest:
         while successfulAttempts < self.attempts:
             proc = random.choice(selectProc)
             op = random.choice(selectOp)
-            if True: #proc != 1:# and op != ProcessState.STOPPED:
-                info = self.processesInfo[proc]
+            info = self.processesInfo[proc]
 
-                if op == ProcessState.TERMINATED and successfulAttempts <= self.attempts/2:
-                    continue
-                
-                with info.lock:
-                    if ProcessInfo.validStateTransition(info.state, op):
+            with info.lock:
+                if ProcessInfo.validStateTransition(info.state, op):
 
-                        if op == ProcessState.TERMINATED:
-                            reserved = self.terminatedProcs.reserve()
-                            if reserved:
-                                selectProc.remove(proc)
-                            else:
-                                continue
+                    if op == ProcessState.TERMINATED:
+                        reserved = self.terminatedProcs.reserve()
+                        if reserved:
+                            selectProc.remove(proc)
+                        else:
+                            continue
 
-                        time.sleep(float(random.randint(50, 500)) / 1000.0)
-                        info.handle.send_signal(ProcessInfo.stateToSignal(op))
-                        info.state = op
-                        successfulAttempts += 1
-                        print("Sending {} to process {}".format(ProcessInfo.stateToSignalStr(op), proc))
+                    time.sleep(float(random.randint(50, 500)) / 1000.0)
+                    info.handle.send_signal(ProcessInfo.stateToSignal(op))
+                    info.state = op
+                    successfulAttempts += 1
+                    print("Sending {} to process {}".format(ProcessInfo.stateToSignalStr(op), proc))
 
-                        # if op == ProcessState.TERMINATED and proc not in terminatedProcs:
-                        #     if len(terminatedProcs) < maxTerminatedProcesses:
+                    # if op == ProcessState.TERMINATED and proc not in terminatedProcs:
+                    #     if len(terminatedProcs) < maxTerminatedProcesses:
 
-                        #         terminatedProcs.add(proc)
+                    #         terminatedProcs.add(proc)
 
-                        # if len(terminatedProcs) == maxTerminatedProcesses:
-                        #     break
-            #else:
-                #successfulAttempts += 1
+                    # if len(terminatedProcs) == maxTerminatedProcesses:
+                    #     break
 
     def remainingUnterminatedProcesses(self):
         remaining = []
@@ -530,11 +462,11 @@ def startProcesses(processes, runscript, hostsFilePath, configFilePath, outputDi
         stderrFd = open(os.path.join(outputDirPath, 'proc{:02d}.stderr'.format(pid)), "w")
 
 
-        procs.append((pid, subprocess.Popen(cmd + cmd_ext, stdout=sys.stdout, stderr=sys.stderr)))
+        procs.append((pid, subprocess.Popen(cmd + cmd_ext, stdout=sys.stdout, stderr=stderrFd)))
 
     return procs
 
-def main(processes, messages, runscript, broadcastType, logsDir, testConfig):
+def main(processes, messages, runscript, broadcastType, logsDir, maxCausal, otherCausal, testConfig):
     # Set tc for loopback
     tc = TC(testConfig['TC'])
     print(tc)
@@ -556,9 +488,11 @@ def main(processes, messages, runscript, broadcastType, logsDir, testConfig):
     if broadcastType == "fifo":
         validation = FifoBroadcastValidation(processes, messages, logsDir)
     else:
-        validation = LCausalBroadcastValidation(processes, messages, logsDir, None)
-
-    hostsFile, configFile, dependencies = validation.generateConfig()
+        validation = LCausalBroadcastValidation(processes, messages, logsDir, None, otherCausal, maxCausal)
+    
+    hostsFile, configFile = validation.generateConfig()
+    if broadcastType == "lcausal":
+        print("Causal relationships:", validation.causalRelationships)
 
     try:
         # Start the processes and get their PIDs
@@ -609,15 +543,7 @@ def main(processes, messages, runscript, broadcastType, logsDir, testConfig):
         [p.join() for p in monitors]
 
         input('Hit `Enter` to validate the output')
-        print("Result of validation: {}".format(validation.checkAll(unterminated, dependencies)))
-
-        outputDirPath = os.path.abspath(logsDir)
-        for pid, _ in procs:
-            print('STDERR of process', pid, ':')
-            with open(os.path.join(outputDirPath, 'proc{:02d}.stderr'.format(pid))) as stderr:
-                for line in stderr:
-                    print(line)
-
+        print("Result of validation: {}".format(validation.checkAll()))
 
     finally:
         if procs is not None:
@@ -670,24 +596,48 @@ if __name__ == "__main__":
         help="Maximum number (because it can crash) of messages that each process can broadcast",
     )
 
+    parser.add_argument(
+        "-c",
+        "--maxCausal",
+        required=False,
+        type=int,
+        dest="maxCausal",
+        help="Maximum number of causality relationships (must be <= num_processes-1)",
+    )
+
+    parser.add_argument(
+        "-oc",
+        "--otherCausal",
+        required=False,
+        action="store_true",
+        dest="otherCausal",
+        help="Use other causal relationships instead of generating",
+    )
+
     results = parser.parse_args()
 
-    """
-        'TC': {
-            'delay': ('200ms', '50ms'),
-            'loss': ('10%', '25%'),
-            'reordering': ('25%', '50%')
-        },
-
-        'TC': {
-            'delay': ('0ms', '0ms'),
-            'loss': ('0.01%', '0.01%')
-        },
-    """
-
     testConfig = {
-        # Network configuration using the tc command
+        # # Network configuration using the tc command
+        # Modified by me
+        # 'TC': {
+        #     'delay': ('100ms', '25ms'),
+        #     'loss': ('5%', '10%'),
+        #     'reordering': ('10%', '20%')
+        # },
 
+        # # StressTest configuration
+        # 'ST': {
+        #     'concurrency' : 8, # How many threads are interferring with the running processes
+        #     'attempts' : 8, # How many interferring attempts each threads does
+        #     'attemptsDistribution' : { # Probability with which an interferring thread will
+        #         'STOP': 0.48,          # select an interferring action (make sure they add up to 1)
+        #         'CONT': 0.48,
+        #         'TERM':0.04
+        #     }
+        # }
+
+        # Network configuration using the tc command
+        # Original conf
         'TC': {
             'delay': ('200ms', '50ms'),
             'loss': ('10%', '25%'),
@@ -697,13 +647,31 @@ if __name__ == "__main__":
         # StressTest configuration
         'ST': {
             'concurrency' : 8, # How many threads are interferring with the running processes
-            'attempts' :  8, # How many interferring attempts each threads does
+            'attempts' : 8, # How many interferring attempts each threads does
             'attemptsDistribution' : { # Probability with which an interferring thread will
                 'STOP': 0.48,          # select an interferring action (make sure they add up to 1)
                 'CONT': 0.48,
-                'TERM': 0.04
+                'TERM':0.04
             }
         }
+        
+        # No stress
+        # 'TC': {
+        #     'delay': ('0ms', '0ms'),
+        #     'loss': ('0%', '0%'),
+        #     'reordering': ('0%', '0%')
+        # },
+
+        # # StressTest configuration
+        # 'ST': {
+        #     'concurrency' : 0, # How many threads are interferring with the running processes
+        #     'attempts' : 0, # How many interferring attempts each threads does
+        #     'attemptsDistribution' : { # Probability with which an interferring thread will
+        #         'STOP': 0,          # select an interferring action (make sure they add up to 1)
+        #         'CONT': 0,
+        #         'TERM':0
+        #     }
+        # }
     }
 
-    main(results.processes, results.messages, results.runscript, results.broadcastType, results.logsDir, testConfig)
+    main(results.processes, results.messages, results.runscript, results.broadcastType, results.logsDir, results.maxCausal, results.otherCausal, testConfig)

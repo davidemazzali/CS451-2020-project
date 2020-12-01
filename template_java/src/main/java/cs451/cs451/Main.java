@@ -57,6 +57,7 @@ public class Main {
             LongArrayPair params = readNumMsg(parser.config(), id); // read the number of messages to broadcast
             numMsg = params.numMsg;
             depending = params.depending;
+            //System.out.println("("+id+") "+numMsg);
         }
 
         Coordinator coordinator = new Coordinator(parser.myId(), parser.barrierIp(), parser.barrierPort(), parser.signalIp(), parser.signalPort());
@@ -72,7 +73,7 @@ public class Main {
         Logger logger = new Logger(parser.output(), hosts.getHosts().size(), numMsg, thisHost.getId());
 
         // instantiate the FIFO broadcast layer
-        TopLevelBroadcast fifo = new LocalizedCausalBroadcast(thisHost.getId(), thisHost.getPort(), (ArrayList)parser.hosts(), depending, logger);
+        TopLevelBroadcast broadcaster = new LocalizedCausalBroadcast(thisHost.getId(), thisHost.getPort(), (ArrayList)parser.hosts(), depending, logger);
 
         Main.initSignalHandlers(logger);
 
@@ -85,7 +86,7 @@ public class Main {
         int numHosts = parser.hosts().size(); // number of hosts in the network
         // begin FIFO-broadcasting messages
         for(long i = 0; i < numMsg; i++) {
-            fifo.broadcast();
+            broadcaster.broadcast();
 
             // get from logger how many of the messages broadcast by this process it has also delivered
             long tempOwnDel = logger.accessOwnDeliveredMsgs(Logger.GET);
@@ -95,7 +96,9 @@ public class Main {
             if(tempNumBroad - tempOwnDel > MSGS_PER_ROUND) {
                 synchronized (logger) {
                     // then wait for the logger to tell when the remaining ones are delivered
+                    //System.out.println("("+id+") waiting");
                     logger.wait();
+                    //System.out.println("("+id+") exited");
                 }
             }
         }
@@ -121,7 +124,7 @@ public class Main {
 
             if(sc.hasNext()) {
                 numMsg = Integer.parseInt(sc.nextLine());
-                System.out.println(numMsg);
+                //System.out.println(numMsg);
             }
 
             String line = sc.nextLine();

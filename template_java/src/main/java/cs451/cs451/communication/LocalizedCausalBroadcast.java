@@ -64,8 +64,8 @@ public class LocalizedCausalBroadcast  implements TopLevelBroadcast{
             // as long as there are messages that can be delivered, deliver them and remove them from pending
             LCMessage msgToDeliver = this.canDeliver();
             while (msgToDeliver != null) {
-                next[msg.getIdBroadcaster() - 1]++;
-                pending.get(msg.getIdBroadcaster()).remove(msgToDeliver.getSeqNum());
+                next[msgToDeliver.getIdBroadcaster() - 1]++;
+                pending.get(msgToDeliver.getIdBroadcaster()).remove(msgToDeliver.getSeqNum());
                 this.deliver(msgToDeliver);
 
                 msgToDeliver = this.canDeliver();
